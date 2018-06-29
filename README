@@ -14,9 +14,12 @@ stats.R
 
 
 #Figures
-
+figure1_VTX00113.pdf
+figure2_OTUabundance.pdf
+figure3_alpha.pdf
+figure4_pcoa.pdf
 
 #results
-
+most results right now (linear mixed effect models + permanova) are actually in Rcode/stats.R)
 
 
