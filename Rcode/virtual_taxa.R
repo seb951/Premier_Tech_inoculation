@@ -1,39 +1,23 @@
 ####setting things up ----
 setwd("/Users/jerry/Documents/CSBQ/hijri/Premier_Tech")
 
-#file describing the bioinfo analyses done by Jacynthe Masse.
-#/Users/costanza/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/Pipeline_usedlast/PremierTech_MH_bioinfo.txt
-
-#fasta file after the OTU were identified, but before things were clustered at 97%.
-#/Users/costanza/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/Pipeline_usedlast/Former/PT_combined_denoised_formated2.fasta
-
-#OTU table after OTU were identified, but before clustering (file was identified at L475 in script PT_AMF.otu_table_from_biom.txt labelled above)
-#/Users/costanza/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/Pipeline_usedlast/Former/PT_AMF.otu_table_from_biom.txt
-
-#Sampling design
-#/Users/costanza/Desktop/04_MohammedHijri/01_PremierTech_analyses/02_Anayses/PT_crop.design.xlsx
-
-#R script from Jacynthe
-#/Users/costanza/Desktop/04_MohammedHijri/01_PremierTech_analyses/02_Anayses/PT_AMF_R/Script_PT_AMF_analyses.R
-
-
 ###blast / getting the Virtual Taxa ----
-#local Blastn against Maarjam glomeromycetes.fasta database (a little slow on a single CPU, but not bad)
+#local Blastn against Maarjam glomeromycetes.fasta database (a little slow on 2 CPUs)
 #set a pretty stringent evalue (1e-50), otherwise, will over-cluster...
-blast_cmd = paste("blastn -query results/PT_combined_denoised_formated2.fasta -db blast_database/glomeromycetes.fasta -max_target_seqs 10 -evalue 1e-50 -outfmt 6 -out results/PT_combined_denoised_formated2.blastn.out")
+blast_cmd = paste("blastn -query results/PT_combined_denoised_formated2.fasta -db blast_database/glomeromycetes.fasta -max_target_seqs 10 -num_threads 2 -evalue 1e-50 -outfmt 6 -out results/PT_combined_denoised_formated2.blastn.out")
 system(blast_cmd)
 
 #load blast results
 blastn = read.table("results/PT_combined_denoised_formated2.blastn.out",header = F, stringsAsFactors = F)
 
-#load OTU names and remove it
+#get OTU names and remove temp file
 system("grep '>' results/PT_combined_denoised_formated2.fasta >results/OTU.names")
 OTU.names = read.table("results/OTU_names",stringsAsFactors = F, header = F)
 OTU.names = cbind(gsub(">","",OTU.names[,1]),0)
 colnames(OTU.names) = c("OTU","VT")
 system("rm results/OTU_names")
 
-#new blast table with only best annotated hit (VTX) per OTU.
+#new BLAST table with only best annotated hit (VTX) per OTU.
 for(i in 1:nrow(OTU.names))
 {
   temp = 0
@@ -57,7 +41,7 @@ OTU.table = read.table("results/PT_AMF.otu_table_from_biom.txt", sep = "\t", str
 OTU.table = OTU.table[,-ncol(OTU.table)]
 OTU.table$VT = 0
 
-###add VT info to OTU table (only if present, otherwise, it stays with its 'OTU name')
+#add VT info to OTU table (only if present, otherwise, it stays with its 'OTU name')
 for(i in 1:nrow(OTU.table))
   {
     temp = OTU.names[OTU.names[,1] == OTU.table[i,1],2]
@@ -65,7 +49,7 @@ for(i in 1:nrow(OTU.table))
   #  if(temp == 0) OTU.table$VT[i] = OTU.table[i,1] #add OTU name, because no VT.
   }
 
-###create new OTU table with VT merged ----
+#create new OTU table with VT merged ----
 vt = rle(sort(OTU.table$VT))$values
 vt = vt[length(vt):1]
 OTU.table.VT.merged = data.frame(matrix(0, nrow= length(vt),ncol = (ncol(OTU.table)-1)))
@@ -78,17 +62,13 @@ for(i in 1:nrow(OTU.table.VT.merged))
     OTU.table.VT.merged[i,2:ncol(OTU.table.VT.merged)] = colSums(temp)
  }
 
-#order dataframe and keep only the top "percent" % expressed
+#order dataframe and keep only the top "percent" % expressed (actually we'll keep everyone as there are only 68 VT)
 percent = 1
 OTU.table.VT.merged.ordered = OTU.table.VT.merged[order(rowSums(OTU.table.VT.merged[,2:117]),decreasing=T),]
 OTU.table.VT.merged.ordered.top = OTU.table.VT.merged.ordered[1:round(nrow(OTU.table.VT.merged.ordered)*percent),]
 
-#fraction of the reads it represents... (99.5% for the top 50%)
-sum(rowSums(OTU.table.VT.merged.ordered[,2:117])[1:round(nrow(OTU.table.VT.merged.ordered)*percent)]) / sum(rowSums(OTU.table.VT.merged.ordered[,2:117]))
-
+#add annotation to the last line (get it from the marjaam database)
 OTU.table.VT.merged.ordered.top$annotation = 0
-
-#add annotation to the last line
 for(i in 1:nrow(OTU.table.VT.merged.ordered.top))
 {
   grep = paste("grep '",OTU.table.VT.merged.ordered.top[i,1],"' reference_material/vtx_taxonomy.txt >temp",sep ="")

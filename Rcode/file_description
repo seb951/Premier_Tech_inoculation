@@ -1,0 +1,15 @@
+#file describing the bioinfo analyses done by Jacynthe Masse.
+#/Users/costanza/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/Pipeline_usedlast/PremierTech_MH_bioinfo.txt
+
+#fasta file after the OTU were identified, but before things were clustered at 97%.
+#/Users/costanza/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/Pipeline_usedlast/Former/PT_combined_denoised_formated2.fasta
+
+#OTU table after OTU were identified, but before clustering (file was identified at L475 in script PT_AMF.otu_table_from_biom.txt labelled above)
+#/Users/costanza/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/Pipeline_usedlast/Former/PT_AMF.otu_table_from_biom.txt
+
+#Sampling design
+#/Users/costanza/Desktop/04_MohammedHijri/01_PremierTech_analyses/02_Anayses/PT_crop.design.xlsx
+
+#R script from Jacynthe
+#/Users/costanza/Desktop/04_MohammedHijri/01_PremierTech_analyses/02_Anayses/PT_AMF_R/Script_PT_AMF_analyses.R
+
