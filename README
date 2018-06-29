@@ -1,0 +1,18 @@
+
+
+This repo will describe the analyses and main results looking at the effect of Rhizophagus irregularis inoculation on the microbial community of glomeromycetes in corn/soy and wheat. 
+
+Experiment was done in collaboration with Premier Tech and led by Mohamed Hijri. 
+
+Analyses were done by several including Jacynthe Masse. Sebastien Renaut redid some of them (getting Virtual taxa, stat analyses) in June 2018
+
+There are two scripts that describe the analyses and should be self explanatory:
+
+virtual_taxa.R
+stats.R
+
+
+
+
+
+
