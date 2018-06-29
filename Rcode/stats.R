@@ -62,6 +62,8 @@ boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Soy",1]~OTU.norm.VTX00113[OTU.
 dev.print(device=pdf, "figures/figure1_VTX00113.pdf", onefile=FALSE)
 dev.off()
 
+#figure legends
+system("echo 'Figure 1: Relative abundance of the most abundant Virtual Taxa (VTX00113 representing Rhizophagus irregularis, 33% of all reads) in all three species (wheat, Corn, Soy) tested.' >figures/legends")
 
 ###barplots of all VTX to look at diversity ----
 #first group things according to treatment and species.
@@ -82,6 +84,9 @@ text(y = rep(1.08,6), x = c(1.3,3.6,6.2), labels = c("Wheat","Corn","Soy"), font
 legend(0.2,-0.4,fill = cols25(),legend = paste(rownames(OTU.norm.barplot)[1:10],taxo[1:10],sep = "_"),cex = 0.75,xpd =T)
 dev.print(device=pdf, "figures/figure2_OTUabundance.pdf", onefile=FALSE)
 dev.off()
+
+#figure legends
+system("echo 'Figure 2: mean Relative abundance of the Virtual Taxa per treatment and species' >>figures/legends")
 
 ##barplot by genera / order / family ----
 #TO DO, but is this necessary?
@@ -121,6 +126,10 @@ boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$growing_stage,beside = F,font = 3, a
 
 dev.print(device=pdf, "figures/figure3_alpha.pdf", onefile=FALSE)
 dev.off()
+
+#figure legends
+system("echo 'Figure 3: alpha diversity per Treatment / Species and Growing stage' >>figures/legends")
+
 
 ###beta diversity ----
 #raw data OR normalized data?
@@ -184,6 +193,10 @@ legend(1.15,1.5,fill = rep("transparent",3), border = c("darkred","darkorange","
 text(c(1.37,1.47),c(1.63,1.56),c("inoculated","control"),srt = 45,pos = 3,font =3)
 dev.print(device=pdf, "figures/figure4_pcoa.pdf", onefile=FALSE)
 dev.off()
+
+#figure legends
+system("echo 'Figure 4: PcoA of the all samples colored coded according to species (wheat, corn, soy). Empty / full circles represent the treatment effect' >>figures/legends")
+
 
 ###sandbox ----
 
