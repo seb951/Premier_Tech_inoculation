@@ -79,9 +79,9 @@ colnames(OTU.norm.barplot) = c("wheat.inoc", "wheat.ctl","corn.inoc","corn.ctl",
 #barplot
 dev.new()
 par(mar=c(16,4,4,2))
-barplot(OTU.norm.barplot,beside = F,font = 3, axisnames = T,ylab = "Relative OTU abundance",col = c(cols25(),rep("grey",60)), las = 3, xpd = T,names.arg =  rep(c("Inoculated","Control"),3))
-text(y = rep(1.08,6), x = c(1.3,3.6,6.2), labels = c("Wheat","Corn","Soy"), font = 2,cex = 2,xpd = T)
-legend(0.2,-0.4,fill = cols25(),legend = paste(rownames(OTU.norm.barplot)[1:10],taxo[1:10],sep = "_"),cex = 0.75,xpd =T)
+barplot(OTU.norm.barplot,beside = F,font = 3, axisnames = T,ylab = "Relative OTU abundance",col = c(cols25(),rep("grey",60)), las = 3, xpd = T,names.arg =  rep(c("Inoculated","Control"),3),space = 0.05)
+text(y = rep(1.08,6), x = c(1.1,3.2,5.2), labels = c("Wheat","Corn","Soy"), font = 2,cex = 2,xpd = T)
+legend(0.1,-0.4,fill = cols25(),legend = paste(rownames(OTU.norm.barplot)[1:10],taxo[1:10],sep = "_"),cex = 0.75,xpd =T)
 dev.print(device=pdf, "figures/figure2_OTUabundance.pdf", onefile=FALSE)
 dev.off()
 
@@ -89,9 +89,44 @@ dev.off()
 system("echo 'Figure 2: mean Relative abundance of the Virtual Taxa per treatment and species' >>figures/legends")
 
 ##barplot by genera / order / family ----
-#TO DO, but is this necessary?
-#TO DO 
-#TO DO
+
+#get info from the taxonomy.
+OTU.norm.barplot.taxo = as.data.frame(OTU.norm.barplot)
+OTU.norm.barplot.taxo$genera = unlist(strsplit(taxo,";"))[seq(4,(length(taxo)*5),by = 5)]
+OTU.norm.barplot.taxo$order = unlist(strsplit(taxo,";"))[seq(3,(length(taxo)*5),by = 5)]
+OTU.norm.barplot.taxo$family = unlist(strsplit(taxo,";"))[seq(2,(length(taxo)*5),by = 5)]
+
+
+#summarize with dplyr.
+OTU.norm.barplot.taxo_summary.GENERA = OTU.norm.barplot.taxo[,-c(8,9)] %>% group_by(genera) %>% summarise_all(sum)
+OTU.norm.barplot.taxo_summary.ORDER = OTU.norm.barplot.taxo[,-c(7,9)] %>% group_by(order) %>% summarise_all(sum)
+OTU.norm.barplot.taxo_summary.FAMILY = OTU.norm.barplot.taxo[,-c(7,8)] %>% group_by(family) %>% summarise_all(sum)
+
+
+dev.new()
+#genera
+barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.GENERA)[,2:7]),xpd = T,
+        names.arg =  colnames(OTU.norm.barplot.taxo_summary.GENERA)[2:7],
+        ylab = "Relative OTU abundance",beside = F,cex.names = 0.5,las = 3,font =3,
+        col = c(cols25()[1:6],rep("grey",60)),xlim = c(0,18*1.2),space = c(0.1))
+
+#order
+barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.ORDER)[,2:7]),
+        las = 3,names.arg =  colnames(OTU.norm.barplot.taxo_summary.GENERA)[2:7],cex.names = 0.5,font =3,
+        add=T,beside = F,col = c(cols25()[7:11],rep("grey",60)),space = c(1.1*6.5,rep(0.1,5)))
+
+#family
+barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.FAMILY)[,2:7]),
+        las = 3,names.arg =  colnames(OTU.norm.barplot.taxo_summary.GENERA)[2:7],cex.names = 0.5,font =3,
+        add=T,beside = F,col = c(cols25()[12:13],rep("grey",60)),space = c(1.1*13-0.1,rep(0.1,5)))
+
+legend(0.5,0.9,legend = OTU.norm.barplot.taxo_summary.GENERA$genera,fill = cols25()[1:6],cex = 0.7,bg = "white")
+legend(7.3,0.9,legend = OTU.norm.barplot.taxo_summary.ORDER$order,fill = cols25()[7:11],cex = 0.7,bg = "white")
+legend(14.5,0.9,legend = OTU.norm.barplot.taxo_summary.FAMILY$family,fill = cols25()[12:13],cex = 0.7,bg = "white")
+text(y = rep(1.04,6), x = c(3.3,10.5,17.5), labels = c("Genera","Order","Family"), font = 2,cex = 2,xpd = T)
+
+dev.print(device=pdf, "figures/figure2b_OTUabundance_per_genera_order_family.pdf", onefile=FALSE)
+dev.off()
 
 ###alpha diversity ----
 #prepare a matrix with alpha diversity as "invsimpson" index
