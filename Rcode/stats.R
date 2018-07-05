@@ -7,6 +7,7 @@ library(nlme)
 library(lme4)
 library(ape)
 library(pals)
+library(dplyr)
 library(RVAideMemoire)
 
 ###Preparing OTU table and sampling design----
@@ -32,6 +33,41 @@ design = design[order(rownames(design)),]
 keep = rownames(design) %in% rownames(OTU.norm)
 design.keep = design[keep,]
 
+###VTX00113 ----
+#This is the most abundant VTX, and a Glomus spp,so this is really what we are interested in...
+#Is R. irregularis (VTX00113) more abundant in inoculated soils?
+
+#prepare a matrix with only VTX00113 
+OTU.norm.VTX00113 = cbind(sqrt(OTU.norm[,1]),design.keep)
+colnames(OTU.norm.VTX00113)[1] = colnames(OTU.norm)[1]
+
+#linear mixed effect model (block is random)
+lmm1 <- lme(VTX00113~treatment+species+growing_stage,data = OTU.norm.VTX00113,random = ~1|bloc, method = "ML")
+anova(lmm1)
+
+#              numDF denDF  F-value p-value
+#Intercept)       1   102 316.02848  <.0001
+#treatment         1     8   0.25388  0.6279
+#species           2     8  32.53176  0.0001 #only significant effect
+#growing_stage     1   102   2.78624  0.0981
+#
+
+shapiro.test(lmm1$residuals) #normaly distributed with the square root transform.
+
+#boxplots
+dev.new()
+par(mfrow = c(2,2))
+boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Wheat",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Wheat",5],main = "VTX00113 - Wheat",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
+boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Corn",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Corn",5],main = "VTX00113 - Corn",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
+boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Soy",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Soy",5],main = "VTX00113 - Soy",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
+dev.print(device=pdf, "figures/figure1_VTX00113.pdf", onefile=FALSE)
+dev.off()
+
+#figure legends
+system("echo 'Figure 1: Relative abundance of the most abundant Virtual Taxa (VTX00113 representing Rhizophagus irregularis, 33% of all reads) in all three species (wheat, Corn, Soy) tested.' >figures/legends")
+
+
+
 ###barplots of all VTX to look at diversity among species and inoculation----
 #first group things according to treatment and species.
 OTU.norm.barplot = cbind(colMeans(OTU.norm[design.keep[,1] == "Wheat" & design.keep[,4] == "inoculated", ]), 
@@ -49,11 +85,11 @@ par(mar=c(16,4,4,2))
 barplot(OTU.norm.barplot,beside = F,font = 3, axisnames = T,ylab = "Relative OTU abundance",col = c(cols25(),rep("grey",60)), las = 3, xpd = T,names.arg =  rep(c("Inoculated","Control"),3),space = 0.05)
 text(y = rep(1.08,6), x = c(1.1,3.2,5.2), labels = c("Wheat","Corn","Soy"), font = 2,cex = 2,xpd = T)
 legend(0.1,-0.4,fill = cols25(),legend = paste(rownames(OTU.norm.barplot)[1:10],taxo[1:10],sep = "_"),cex = 0.75,xpd =T)
-dev.print(device=pdf, "figures/figure1_OTUabundance.pdf", onefile=FALSE)
+dev.print(device=pdf, "figures/figure2_OTUabundance.pdf", onefile=FALSE)
 dev.off()
 
 #print figure caption
-system("echo 'Figure 1: mean Relative abundance of the Virtual Taxa per treatment and species' >figures/legends")
+system("echo 'Figure 2: mean Relative abundance of the Virtual Taxa per treatment and species' >>figures/legends")
 
 ###barplot by genera / order / family ----
 #get taxonomy info.
@@ -92,11 +128,11 @@ legend(0.5,0.9,legend = OTU.norm.barplot.taxo_summary.GENERA$genera,fill = cols2
 legend(7.3,0.9,legend = OTU.norm.barplot.taxo_summary.ORDER$order,fill = cols25()[7:11],cex = 0.7,bg = "white")
 legend(14.5,0.9,legend = OTU.norm.barplot.taxo_summary.FAMILY$family,fill = cols25()[12:13],cex = 0.7,bg = "white")
 text(y = rep(1.04,6), x = c(3.3,10.5,17.5), labels = c("Genera","Order","Family"), font = 2,cex = 2,xpd = T)
-dev.print(device=pdf, "figures/figure1b_OTUabundance_per_genera_order_family.pdf", onefile=FALSE)
+dev.print(device=pdf, "figures/figure3_OTUabundance_per_genera_order_family.pdf", onefile=FALSE)
 dev.off()
 
 #print figure caption
-system("echo 'Figure 1b: mean Relative abundance of the Virtual Taxa grouped by genera, order, family per treatment and species' >>figures/legends")
+system("echo 'Figure 3: mean Relative abundance of the Virtual Taxa grouped by genera, order, family per treatment and species' >>figures/legends")
 
 ###alpha diversity ----
 #prepare a matrix with alpha diversity as "invsimpson" index
@@ -129,11 +165,11 @@ boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$species,beside = F,font = 3, axisnam
 #growing_stage
 boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$growing_stage,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Growing stage",cex.lab = 1.5,cex.main = 1.5,names = expression(italic(early),italic(late)))
 
-dev.print(device=pdf, "figures/figure2_alpha.pdf", onefile=FALSE)
+dev.print(device=pdf, "figures/figure4_alpha.pdf", onefile=FALSE)
 dev.off()
 
 #figure legends
-system("echo 'Figure 2: alpha diversity per Treatment / Species and Growing stage' >>figures/legends")
+system("echo 'Figure 4: alpha diversity per Treatment / Species and Growing stage' >>figures/legends")
 
 
 
@@ -197,45 +233,12 @@ legend(1.15,1.5,fill = rep("transparent",3), border = c("darkred","darkorange","
 
 #inoculation text (this is a pain...)
 text(c(1.37,1.47),c(1.63,1.56),c("inoculated","control"),srt = 45,pos = 3,font =3)
-dev.print(device=pdf, "figures/figure3_pcoa.pdf", onefile=FALSE)
+dev.print(device=pdf, "figures/figure5_pcoa.pdf", onefile=FALSE)
 dev.off()
 
 #figure legends
-system("echo 'Figure 3: PcoA of the all samples colored coded according to species (wheat, corn, soy). Empty / full circles represent the treatment effect' >>figures/legends")
+system("echo 'Figure 5: PcoA of the all samples colored coded according to species (wheat, corn, soy). Empty / full circles represent the treatment effect' >>figures/legends")
 
-
-###VTX00113 ----
-#This is the most abundant VTX, and a Glomus spp,so this is really what we are interested in...
-#Is R. irregularis (VTX00113) more abundant in inoculated soils?
-
-#prepare a matrix with only VTX00113 
-OTU.norm.VTX00113 = cbind(sqrt(OTU.norm[,1]),design.keep)
-colnames(OTU.norm.VTX00113)[1] = colnames(OTU.norm)[1]
-
-#linear mixed effect model (block is random)
-lmm1 <- lme(VTX00113~treatment+species+growing_stage,data = OTU.norm.VTX00113,random = ~1|bloc, method = "ML")
-anova(lmm1)
-
-#              numDF denDF  F-value p-value
-#Intercept)       1   102 316.02848  <.0001
-#treatment         1     8   0.25388  0.6279
-#species           2     8  32.53176  0.0001 #only significant effect
-#growing_stage     1   102   2.78624  0.0981
-#
-
-shapiro.test(lmm1$residuals) #normaly distributed with the square root transform.
-
-#boxplots
-dev.new()
-par(mfrow = c(2,2))
-boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Wheat",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Wheat",5],main = "VTX00113 - Wheat",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
-boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Corn",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Corn",5],main = "VTX00113 - Corn",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
-boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Soy",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Soy",5],main = "VTX00113 - Soy",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
-dev.print(device=pdf, "figures/figure4_VTX00113.pdf", onefile=FALSE)
-dev.off()
-
-#figure legends
-system("echo 'Figure 4: Relative abundance of the most abundant Virtual Taxa (VTX00113 representing Rhizophagus irregularis, 33% of all reads) in all three species (wheat, Corn, Soy) tested.' >>figures/legends")
 
 
 

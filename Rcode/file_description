@@ -4,7 +4,7 @@
 #fasta file after the OTU were identified, but before things were clustered at 97%.
 #/Users/costanza/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/Pipeline_usedlast/Former/PT_combined_denoised_formated2.fasta
 
-#OTU table after OTU were identified, but before clustering (file was identified at L475 in script PT_AMF.otu_table_from_biom.txt labelled above)
+#OTU table after OTU were identified, but before clustering (file was identified at L475 in script PremierTech_MH_bioinfo.txt labelled above)
 #/Users/costanza/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/Pipeline_usedlast/Former/PT_AMF.otu_table_from_biom.txt
 
 #Sampling design
