@@ -13,3 +13,19 @@
 #R script from Jacynthe
 #/Users/costanza/Desktop/04_MohammedHijri/01_PremierTech_analyses/02_Anayses/PT_AMF_R/Script_PT_AMF_analyses.R
 
+#note that raw sequences are actually here: 
+~/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/02_Bioinformatic/*fastq
+
+#trimmed sequences are here too.
+~/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/02_Bioinformatic/*_paired.fastq
+
+#how many raw reads:
+wc -l ~/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/02_Bioinformatic/*fastq >~/Desktop/raw.counts
+
+#how many trimmed
+wc -l ~/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/02_Bioinformatic/*R?_paired.fq >~/Desktop/trimmed.counts
+
+
+
+
+

@@ -33,6 +33,8 @@ design = design[order(rownames(design)),]
 keep = rownames(design) %in% rownames(OTU.norm)
 design.keep = design[keep,]
 
+#what samples were discarded
+rownames(design)[keep == F]
 ###VTX00113 ----
 #This is the most abundant VTX, and a Glomus spp,so this is really what we are interested in...
 #Is R. irregularis (VTX00113) more abundant in inoculated soils?
