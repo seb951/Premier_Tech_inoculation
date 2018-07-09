@@ -44,24 +44,42 @@ OTU.norm.VTX00113 = cbind(sqrt(OTU.norm[,1]),design.keep)
 colnames(OTU.norm.VTX00113)[1] = colnames(OTU.norm)[1]
 
 #linear mixed effect model (block is random)
-lmm1 <- lme(VTX00113~treatment+species+growing_stage,data = OTU.norm.VTX00113,random = ~1|bloc, method = "ML")
+lmm1 <- lme(VTX00113~treatment+species+growing_stage,data = OTU.norm.VTX00113,random = ~1|bloc, method = "REML")
 anova(lmm1)
 
 #              numDF denDF  F-value p-value
-#Intercept)       1   102 316.02848  <.0001
-#treatment         1     8   0.25388  0.6279
-#species           2     8  32.53176  0.0001 #only significant effect
-#growing_stage     1   102   2.78624  0.0981
+#(Intercept)       1   102 728.8265  <.0001
+#treatment         1     8   0.2599  0.6240
+#species           2     8  39.2675  0.0001***sig effect
+#growing_stage     1   102   4.0835  0.0459** sig
 #
-
 shapiro.test(lmm1$residuals) #normaly distributed with the square root transform.
+
+#test the interaction in a linear model?
+lmm2 <- lm(VTX00113~treatment+species*growing_stage,data = OTU.norm.VTX00113)
+anova(lmm2)
+
+#                       Df Sum Sq Mean Sq F value   Pr(>F)    
+#treatment               1 0.0139 0.01391  0.4142  0.52119    
+#species                 2 2.9888 1.49440 44.4875 7.49e-15 ***
+#growing_stage           1 0.1398 0.13978  4.1612  0.04378 *  
+#species:growing_stage   1 0.1289 0.12885  3.8358  0.05272 .  *not sign.. !!!!
+
 
 #boxplots
 dev.new()
-par(mfrow = c(2,2))
-boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Wheat",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Wheat",5],main = "VTX00113 - Wheat",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
-boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Corn",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Corn",5],main = "VTX00113 - Corn",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
-boxplot(OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Soy",1]~OTU.norm.VTX00113[OTU.norm.VTX00113[,2]=="Soy",5],main = "VTX00113 - Soy",ylab = "OTU relative abundance",names = expression(italic(control),italic(inoculated)))
+#boxplot: 3 boxplots for treatment, species and early/late
+dev.new(width=10, height=6,units = "cm",noRStudioGD = TRUE)
+par(mfrow = c(1,3),mar = c(6,5,4,2))
+
+#treatment
+boxplot(OTU.norm.VTX00113$VTX00113~OTU.norm.VTX00113$treatment,beside = F,font = 3, axisnames = T,ylab = "VTX00113 relative abundance",las = 3, xpd = T,main = "Treatment",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(control),italic(inoculated)))
+
+#species
+boxplot(OTU.norm.VTX00113$VTX00113~OTU.norm.VTX00113$species,beside = F,font = 3, axisnames = T,ylab = "VTX00113 relative abundance",las = 3, xpd = T,main = "Species",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(Corn),italic(Soy),italic(Wheat)))
+
+#growing_stage
+boxplot(OTU.norm.VTX00113$VTX00113~OTU.norm.VTX00113$growing_stage,beside = F,font = 3, axisnames = T,ylab = "VTX00113 relative abundance",las = 3, xpd = T,main = "Growing stage",cex.lab = 1.5,cex.main = 1.5,names = expression(italic(early),italic(late)))
 dev.print(device=pdf, "figures/figure1_VTX00113.pdf", onefile=FALSE)
 dev.off()
 
@@ -143,14 +161,14 @@ OTU.norm.alpha[,1] = log(OTU.norm.alpha[,1])
 colnames(OTU.norm.alpha)[1] = "alpha"
 
 #linear mixed effect model on alpha diversity (block is random)
-lmm.alpha <- lme(alpha~treatment+species+growing_stage,data = OTU.norm.alpha,random = ~1|bloc, method = "ML")
+lmm.alpha <- lme(alpha~treatment+species+growing_stage,data = OTU.norm.alpha,random = ~1|bloc, method = "REML")
 anova(lmm.alpha)
 
 #              numDF denDF  F-value p-value
-#(Intercept)       1   102 609.2532  <.0001
-#treatment         1     8   0.0043  0.9495
-#species           2     8  14.4030  0.0022 #again, only signif. effect
-#growing_stage     1   102   0.7023  0.4040
+#(Intercept)       1   102 864.2705  <.0001
+#treatment         1     8   0.0030  0.9575
+#species           2     8  12.7100  0.0033 ***again only sig effect
+#growing_stage     1   102   2.4562  0.1202
 
 shapiro.test(lmm.alpha$residuals) #normaly distributed with the log transform
 
@@ -162,7 +180,7 @@ par(mfrow = c(1,3),mar = c(6,5,4,2))
 boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$treatment,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Treatment",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(control),italic(inoculated)))
 
 #species
-boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$species,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Species",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(Wheat),italic(Corn),italic(Soy)))
+boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$species,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Species",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(Corn),italic(Soy),italic(Wheat)))
 
 #growing_stage
 boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$growing_stage,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Growing stage",cex.lab = 1.5,cex.main = 1.5,names = expression(italic(early),italic(late)))
@@ -227,8 +245,11 @@ axis.1.2 = round((OTU.norm.hel.bray.pcoa$values$Broken_stick/sum(OTU.norm.hel.br
 #crops are "darkred","darkblue","darkorange
 col = design.keep$species
 col = gsub("Corn","darkred",col);col=gsub("Wheat","darkorange",col);col=gsub("Soy","darkblue",col)
+pch = rep(0,nrow(design.keep))
+pch[design.keep$treatment == "inoculated"] = 19; pch[design.keep$treatment == "control"] = 21
+
 dev.new()
-plot(OTU.norm.hel.bray.pcoa$vectors[,1],OTU.norm.hel.bray.pcoa$vectors[,2],col = col, pch = ifelse(design.keep$treatment == "inoculated",19,21),
+plot(OTU.norm.hel.bray.pcoa$vectors[,1],OTU.norm.hel.bray.pcoa$vectors[,2],col = col, pch = pch,
      ylab = paste("PC2 (",axis.1.2[1],"%)",sep = ""), xlab = paste("PC1 (",axis.1.2[1],"%)",sep = ""))
 legend(1,1.5,fill = c("darkred","darkorange","darkblue"),legend = c("    Corn","    Wheat","    Soy"),box.lwd = 1)
 legend(1.15,1.5,fill = rep("transparent",3), border = c("darkred","darkorange","darkblue"),legend = rep("",3),box.lwd = 0,box.col = "transparent")
@@ -242,7 +263,22 @@ dev.off()
 system("echo 'Figure 5: PcoA of the all samples colored coded according to species (wheat, corn, soy). Empty / full circles represent the treatment effect' >>figures/legends")
 
 
+###RDA ----
+rda = rda(formula=OTU.norm.hel ~ species*growing_stage, data=design.keep,scale = T)
+dev.new()
+plot(rda, type = "n", scaling = 3,ylab = "RDA1 (PVE=14.3%)",xlab ="RDA2 (PVE=9.0%)",xlim = c(-1.5,1.5))
+points(rda,display = "sites",scaling=3,pch = 19,col = col)
+font = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"2","1"))
+cex = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"0.6","0.4"))
 
+text(rda, display = "species", scaling = scl, cex = cex, col = "darkcyan",font = font,adj = 0.7)
+
+#figure legends
+system("echo 'Figure 6: RDA: VTX are labelled, with Glomus species in Bold.' >>figures/legends")
+
+
+dev.print(device=pdf, "figures/figure6_rda.pdf", onefile=FALSE)
+dev.off()
 
 
 
@@ -259,3 +295,11 @@ system("echo 'Figure 5: PcoA of the all samples colored coded according to speci
 #Assumption 3: indepence of samples.
 
 
+rda = rda(formula=OTU.norm.hel ~ species*growing_stage, data=design.keep,scale = T)
+dev.new()
+plot(rda, type = "n", scaling = 3,ylab = "RDA1 (PVE=14.3%)",xlab ="RDA2 (PVE=9.0%)")
+points(rda,display = "sites",scaling=3,pch = 19,col = col)
+text(rda, display = "species", scaling = scl, cex = 0.5, col = "darkcyan",font = 2)
+
+dev.print(device=pdf, "figures/figure6_rda.pdf", onefile=FALSE)
+dev.off()
