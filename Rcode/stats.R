@@ -266,15 +266,15 @@ system("echo 'Figure 5: PcoA of the all samples colored coded according to speci
 ###RDA ----
 rda = rda(formula=OTU.norm.hel ~ species*growing_stage, data=design.keep,scale = T)
 dev.new()
-plot(rda, type = "n", scaling = 3,ylab = "RDA1 (PVE=14.3%)",xlab ="RDA2 (PVE=9.0%)",xlim = c(-1.5,1.5))
-points(rda,display = "sites",scaling=3,pch = 19,col = col)
+rda.plot = plot(rda, type = "n", scaling = 3,ylab = "RDA1 (PVE=14.3%)",xlab ="RDA2 (PVE=9.0%)",xlim = c(-1.5,1.5))
+#points(rda,display = "sites",scaling=3,pch = 1,col = col)
 font = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"2","1"))
 cex = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"0.6","0.4"))
-
+text(rda.plot$centroids,labels=rownames(rda.plot$centroids), cex = 1, col = "black",font=2,pos = 4)
 text(rda, display = "species", scaling = scl, cex = cex, col = "darkcyan",font = font,adj = 0.7)
-
+points(rda.plot$centroids,pch = 3, col="black",lwd=2)
 #figure legends
-system("echo 'Figure 6: RDA: VTX are labelled, with Glomus species in Bold.' >>figures/legends")
+system("echo 'Figure 6: RDA: VTX are labelled, with Glomus species in Bold. X represent the centroids of the Species (wheat, corn and soy) effect and the growing stage effect (early vs. late)' >>figures/legends")
 
 
 dev.print(device=pdf, "figures/figure6_rda.pdf", onefile=FALSE)
