@@ -33,8 +33,9 @@ design = design[order(rownames(design)),]
 keep = rownames(design) %in% rownames(OTU.norm)
 design.keep = design[keep,]
 
-#what samples were discarded
+#Seven samples were discarded
 rownames(design)[keep == F]
+
 ###VTX00113 ----
 #This is the most abundant VTX, and a Glomus spp,so this is really what we are interested in...
 #Is R. irregularis (VTX00113) more abundant in inoculated soils?
@@ -84,7 +85,7 @@ dev.print(device=pdf, "figures/figure1_VTX00113.pdf", onefile=FALSE)
 dev.off()
 
 #figure legends
-system("echo 'Figure 1: Relative abundance of the most abundant Virtual Taxa (VTX00113 representing Rhizophagus irregularis, 33% of all reads) in all three species (wheat, Corn, Soy) tested.' >figures/legends")
+system("echo 'Figure 1: Relative abundance of the most abundant Virtual Taxa (VTX00113 representing the Rhizophagus irregularis DAOM-197198 inoculant, 38% of all reads) in all three species (wheat, Corn, Soy) tested.' >figures/legends")
 
 
 
@@ -104,12 +105,12 @@ dev.new()
 par(mar=c(16,4,4,2))
 barplot(OTU.norm.barplot,beside = F,font = 3, axisnames = T,ylab = "Relative OTU abundance",col = c(cols25(),rep("grey",60)), las = 3, xpd = T,names.arg =  rep(c("Inoculated","Control"),3),space = 0.05)
 text(y = rep(1.08,6), x = c(1.1,3.2,5.2), labels = c("Wheat","Corn","Soy"), font = 2,cex = 2,xpd = T)
-legend(0.1,-0.4,fill = cols25(),legend = paste(rownames(OTU.norm.barplot)[1:10],taxo[1:10],sep = "_"),cex = 0.75,xpd =T)
+legend(0.1,-0.4,fill = cols25(),legend =  paste(rownames(OTU.norm.barplot)[1:10],rep(";",10),taxo[1:10],c("*",rep("",9)),sep = ""),cex = 0.75,xpd =T)
 dev.print(device=pdf, "figures/figure2_OTUabundance.pdf", onefile=FALSE)
 dev.off()
 
 #print figure caption
-system("echo 'Figure 2: mean Relative abundance of the Virtual Taxa per treatment and species' >>figures/legends")
+system("echo 'Figure 2: mean Relative abundance of the Virtual Taxa and taxonomic information according to the MaarjAM (Opik et al. 2014) database per treatment and species. *VTX00113 represents the Rhizophagus irregularis DAOM-197198 inoculant' >>figures/legends")
 
 ###barplot by genera / order / family ----
 #get taxonomy info.
@@ -245,12 +246,12 @@ axis.1.2 = round((OTU.norm.hel.bray.pcoa$values$Broken_stick/sum(OTU.norm.hel.br
 #crops are "darkred","darkblue","darkorange
 col = design.keep$species
 col = gsub("Corn","darkred",col);col=gsub("Wheat","darkorange",col);col=gsub("Soy","darkblue",col)
-pch = rep(0,nrow(design.keep))
-pch[design.keep$treatment == "inoculated"] = 19; pch[design.keep$treatment == "control"] = 21
+pch.pcoa = rep(0,nrow(design.keep))
+pch.pcoa[design.keep$treatment == "inoculated"] = 19; pch.pcoa[design.keep$treatment == "control"] = 21
 
 dev.new()
-plot(OTU.norm.hel.bray.pcoa$vectors[,1],OTU.norm.hel.bray.pcoa$vectors[,2],col = col, pch = pch,
-     ylab = paste("PC2 (",axis.1.2[1],"%)",sep = ""), xlab = paste("PC1 (",axis.1.2[1],"%)",sep = ""))
+plot(OTU.norm.hel.bray.pcoa$vectors[,1],OTU.norm.hel.bray.pcoa$vectors[,2],col = col, pch = pch.pcoa,
+     ylab = paste("PC2",sep = ""), xlab = paste("PC1",sep = ""))
 legend(1,1.5,fill = c("darkred","darkorange","darkblue"),legend = c("    Corn","    Wheat","    Soy"),box.lwd = 1)
 legend(1.15,1.5,fill = rep("transparent",3), border = c("darkred","darkorange","darkblue"),legend = rep("",3),box.lwd = 0,box.col = "transparent")
 
@@ -264,26 +265,40 @@ system("echo 'Figure 5: PcoA of the all samples colored coded according to speci
 
 
 ###RDA ----
+rownames(OTU.norm.barplot)[1:10]
+
 rda = rda(formula=OTU.norm.hel ~ species*growing_stage, data=design.keep,scale = T)
 dev.new()
-rda.plot = plot(rda, type = "n", scaling = 3,ylab = "RDA1 (PVE=14.3%)",xlab ="RDA2 (PVE=9.0%)",xlim = c(-1.5,1.5))
-#points(rda,display = "sites",scaling=3,pch = 1,col = col)
-font = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"2","1"))
-cex = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"0.6","0.4"))
-text(rda.plot$centroids,labels=rownames(rda.plot$centroids), cex = 1, col = "black",font=2,pos = 4)
-text(rda, display = "species", scaling = scl, cex = cex, col = "darkcyan",font = font,adj = 0.7)
-points(rda.plot$centroids,pch = 3, col="black",lwd=2)
+
+#empty plot, and keep plotting data structure to reuse with points()
+rda.plot = plot(rda, type = "n", scaling = 3,ylab = "RDA1 (PVE=9.0%)",xlab ="RDA2 (PVE=14.3%)",xlim = c(-1.5,1.5))
+col = design.keep$species
+col = gsub("Corn","#8B000099",col);col=gsub("Wheat","#FF8C0099",col);col=gsub("Soy","#00008B99",col)
+
+#plot the samples
+points(rda.plot$sites,col = col,pch = 21)
+
+#plot the VTX but NOT the top 10.
+points(rda.plot$species[-c(1:10),],pch = 4,col = "darkcyan",lwd=1.2)
+
+#plot the centroids
+points(rda.plot$centroids,pch = 3, col=c("#8B0000","#00008B","#FF8C00","black","black"),lwd=2)
+text(rda.plot$centroids,labels=c("Corn","Soy","Wheat","Late","Early"),col =c("darkred","darkblue","darkorange","black","black"), cex = 1,font=2,pos = 4)
+
+#plot the VTX top 10 (with labels)
+text(rda.plot$species[c(1:10),],labels = rownames(rda.plot$species[c(1:10),]),cex = 0.7, col = "darkcyan",font = 2,adj = 0.8)
+
 #figure legends
-system("echo 'Figure 6: RDA: VTX are labelled, with Glomus species in Bold. X represent the centroids of the Species (wheat, corn and soy) effect and the growing stage effect (early vs. late)' >>figures/legends")
+system("echo 'Figure 6: Redundancy analysis (RDA): only the top10 most abundant VTX are labelled, \"Plus\" signs represent the centroids of the Species (wheat, corn and soy) and growing stage effect (early vs. late)' >>figures/legends")
 
 
 dev.print(device=pdf, "figures/figure6_rda.pdf", onefile=FALSE)
 dev.off()
 
-
-
-
 ###sandbox ----
+
+#font = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"2","1"))
+#cex = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"0.6","0.4"))
 
 #Assumption 1: Normal distribution of the residues
 #shapiro.test(resid(anov_spores_inoculation_CE))
@@ -293,13 +308,3 @@ dev.off()
 #bartlett.test(spores ~ Inoculation, data=colonization_corn_early)
 
 #Assumption 3: indepence of samples.
-
-
-rda = rda(formula=OTU.norm.hel ~ species*growing_stage, data=design.keep,scale = T)
-dev.new()
-plot(rda, type = "n", scaling = 3,ylab = "RDA1 (PVE=14.3%)",xlab ="RDA2 (PVE=9.0%)")
-points(rda,display = "sites",scaling=3,pch = 19,col = col)
-text(rda, display = "species", scaling = scl, cex = 0.5, col = "darkcyan",font = 2)
-
-dev.print(device=pdf, "figures/figure6_rda.pdf", onefile=FALSE)
-dev.off()
