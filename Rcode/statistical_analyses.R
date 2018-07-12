@@ -38,7 +38,7 @@ rownames(design)[keep == F]
 
 ###VTX00113 ----
 #This is the most abundant VTX, and a Glomus spp,so this is really what we are interested in...
-#Is R. irregularis (VTX00113) more abundant in inoculated soils?
+#Is R. irregulare (VTX00113) more abundant in inoculated soils?
 
 #prepare a matrix with only VTX00113 (note that you can also test VTX00114 (OTU.norm[,33]) and it shows the same pattern as VTX00113)
 OTU.norm.VTX00113 = cbind(sqrt(OTU.norm[,1]),design.keep)
@@ -85,7 +85,7 @@ dev.print(device=pdf, "figures/figure1_VTX00113.pdf", onefile=FALSE)
 dev.off()
 
 #figure legends
-system("echo 'Figure 1: Relative abundance of the most abundant Virtual Taxa (VTX00113 represents the R. irregularis DAOM-197198 inoculant, 38% of all reads) in all three species (wheat, Corn, Soy) tested. Species and Growing stage had a significant effect on the presence of VTX00113' >figures/legends")
+system("echo 'Figure 1: Relative abundance of the most abundant Virtual Taxa (VTX00113 represents the R. irregulare DAOM-197198 inoculant, 38% of all reads) in all three species (wheat, Corn, Soy) tested. Species and Growing stage had a significant effect on the presence of VTX00113' >figures/legends")
 
 
 
@@ -110,7 +110,7 @@ dev.print(device=pdf, "figures/figure2_OTUabundance.pdf", onefile=FALSE)
 dev.off()
 
 #print figure caption
-system("echo 'Figure 2: Mean relative abundance of the Virtual Taxa and taxonomic information according to the MaarjAM (Opik et al. 2014) database per treatment and species. *VTX00113 represents the R. irregularis DAOM-197198 inoculant.' >>figures/legends")
+system("echo 'Figure 2: Mean relative abundance of the Virtual Taxa and taxonomic information according to the MaarjAM (Opik et al. 2014) database per treatment and species. *VTX00113 represents the R. irregulare DAOM-197198 inoculant.' >>figures/legends")
 
 ###barplot by genera / order / family ----
 #get taxonomy info.
