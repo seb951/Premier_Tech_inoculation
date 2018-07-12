@@ -40,7 +40,7 @@ rownames(design)[keep == F]
 #This is the most abundant VTX, and a Glomus spp,so this is really what we are interested in...
 #Is R. irregularis (VTX00113) more abundant in inoculated soils?
 
-#prepare a matrix with only VTX00113 
+#prepare a matrix with only VTX00113 (note that you can also test VTX00114 (OTU.norm[,33]) and it shows the same pattern as VTX00113)
 OTU.norm.VTX00113 = cbind(sqrt(OTU.norm[,1]),design.keep)
 colnames(OTU.norm.VTX00113)[1] = colnames(OTU.norm)[1]
 
@@ -85,7 +85,7 @@ dev.print(device=pdf, "figures/figure1_VTX00113.pdf", onefile=FALSE)
 dev.off()
 
 #figure legends
-system("echo 'Figure 1: Relative abundance of the most abundant Virtual Taxa (VTX00113 representing the Rhizophagus irregularis DAOM-197198 inoculant, 38% of all reads) in all three species (wheat, Corn, Soy) tested.' >figures/legends")
+system("echo 'Figure 1: Relative abundance of the most abundant Virtual Taxa (VTX00113 represents the R. irregularis DAOM-197198 inoculant, 38% of all reads) in all three species (wheat, Corn, Soy) tested. Species and Growing stage had a significant effect on the presence of VTX00113' >figures/legends")
 
 
 
@@ -110,7 +110,7 @@ dev.print(device=pdf, "figures/figure2_OTUabundance.pdf", onefile=FALSE)
 dev.off()
 
 #print figure caption
-system("echo 'Figure 2: mean Relative abundance of the Virtual Taxa and taxonomic information according to the MaarjAM (Opik et al. 2014) database per treatment and species. *VTX00113 represents the Rhizophagus irregularis DAOM-197198 inoculant' >>figures/legends")
+system("echo 'Figure 2: Mean relative abundance of the Virtual Taxa and taxonomic information according to the MaarjAM (Opik et al. 2014) database per treatment and species. *VTX00113 represents the R. irregularis DAOM-197198 inoculant.' >>figures/legends")
 
 ###barplot by genera / order / family ----
 #get taxonomy info.
@@ -153,7 +153,7 @@ dev.print(device=pdf, "figures/figure3_OTUabundance_per_genera_order_family.pdf"
 dev.off()
 
 #print figure caption
-system("echo 'Figure 3: mean Relative abundance of the Virtual Taxa grouped by genera, order, family per treatment and species' >>figures/legends")
+system("echo 'Figure 3: Mean relative abundance of the Virtual Taxa grouped by genera, order and family according to the MaarjAM (Opik et al. 2014) database per treatment and species.' >>figures/legends")
 
 ###alpha diversity ----
 #prepare a matrix with alpha diversity as "invsimpson" index
@@ -173,7 +173,19 @@ anova(lmm.alpha)
 
 shapiro.test(lmm.alpha$residuals) #normaly distributed with the log transform
 
-#boxplot: 3 boxplots for treatment, species and early/late
+#test the interaction in a linear model?
+lmm.alpha2 <- lm(alpha~treatment+species*growing_stage,data = OTU.norm.alpha)
+anova(lmm.alpha2)
+
+#                       Df  Sum Sq Mean Sq F value    Pr(>F)    
+#treatment               1  0.0006 0.00061  0.0030    0.9561    
+#species                 2  5.1225 2.56127 12.7627 1.047e-05 ***
+#growing_stage           1  0.4950 0.49496  2.4664    0.1192    
+#species:growing_stage   1  0.2922 0.29224  1.4562    0.2301   # not signif!  
+# Residuals             109 21.8746 0.20068 
+
+###alpha diversity:boxplot ----
+#3 boxplots for treatment, species and early/late
 dev.new(width=10, height=6,units = "cm",noRStudioGD = TRUE)
 par(mfrow = c(1,3),mar = c(6,5,4,2))
 
@@ -190,7 +202,7 @@ dev.print(device=pdf, "figures/figure4_alpha.pdf", onefile=FALSE)
 dev.off()
 
 #figure legends
-system("echo 'Figure 4: alpha diversity per Treatment / Species and Growing stage' >>figures/legends")
+system("echo 'Figure 4: alpha diversity per treatment, species and growing stage. Species and growing stage had a significant effect on alpha diversity.' >>figures/legends")
 
 
 
@@ -252,6 +264,7 @@ pch.pcoa[design.keep$treatment == "inoculated"] = 19; pch.pcoa[design.keep$treat
 dev.new()
 plot(OTU.norm.hel.bray.pcoa$vectors[,1],OTU.norm.hel.bray.pcoa$vectors[,2],col = col, pch = pch.pcoa,
      ylab = paste("PC2",sep = ""), xlab = paste("PC1",sep = ""))
+abline(h = 0,lty=3,cex =0.7);abline(v=0,lty=3,cex =0.7)
 legend(1,1.5,fill = c("darkred","darkorange","darkblue"),legend = c("    Corn","    Wheat","    Soy"),box.lwd = 1)
 legend(1.15,1.5,fill = rep("transparent",3), border = c("darkred","darkorange","darkblue"),legend = rep("",3),box.lwd = 0,box.col = "transparent")
 
@@ -261,7 +274,7 @@ dev.print(device=pdf, "figures/figure5_pcoa.pdf", onefile=FALSE)
 dev.off()
 
 #figure legends
-system("echo 'Figure 5: PcoA of the all samples colored coded according to species (wheat, corn, soy). Empty / full circles represent the treatment effect' >>figures/legends")
+system("echo 'Figure 5: Principle Coordinate Analysis (PCoA) of the all samples colored coded according to species (wheat, corn, soy). Empty / full circles represent the treatment effect.' >>figures/legends")
 
 
 ###RDA ----
@@ -289,7 +302,7 @@ text(rda.plot$centroids,labels=c("Corn","Soy","Wheat","Late","Early"),col =c("da
 text(rda.plot$species[c(1:10),],labels = rownames(rda.plot$species[c(1:10),]),cex = 0.7, col = "darkcyan",font = 2,adj = 0.8)
 
 #figure legends
-system("echo 'Figure 6: Redundancy analysis (RDA): only the top10 most abundant VTX are labelled, \"Plus\" signs represent the centroids of the Species (wheat, corn and soy) and growing stage effect (early vs. late)' >>figures/legends")
+system("echo 'Figure 6: Redundancy Analysis (RDA). Note that only the top10 most abundant VT were labeled, "+" sign represent the centroids of the species (wheat, corn and soy) and growing stage effect (early vs. late).' >>figures/legends")
 
 
 dev.print(device=pdf, "figures/figure6_rda.pdf", onefile=FALSE)
