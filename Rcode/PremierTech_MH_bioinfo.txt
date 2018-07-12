@@ -1,0 +1,815 @@
+##Jan 5th 2017
+##Bioinformatic pipeline to analyse 18S data
+##Authors:Jacynthe Masse (first designed with Sebastien Renault)
+###Updates: Feb 23rd 2017
+##Script that can call entirerly in R
+
+
+#Set working directory
+#setwd("~/Desktop/Shared_Folder")
+
+###In qiime: Calculating how many reads there were to start with (for meterials and methods) 
+system("macqiime")
+
+count_seqs.py -i "*.fastq" -o original_seq_counts_real.txt
+
+##We had a total of 8,181,190 reads
+
+##Back in R
+exit
+
+##Do a list with all the fastq files in the directory
+system("ls -1 *fastq >list_fq")
+
+##Put that list in R
+list_fq = read.table("list_fq", stringsAsFactors = F, header = F)
+
+##Do a for loop that will use trimmomatic to trim the reads
+for(i in 1: (nrow(list_fq)/2))
+	{
+	command_trim = paste("java -jar /Users/Jacynthe/Desktop/UbuntuShare/04_TreeSpeciesEffect/16S/Trimmomatic-0.36/trimmomatic-0.36.jar  PE -phred33 ",list_fq[(i*2)-1,1]," " ,list_fq[(i*2),1], " ",list_fq[(i*2)-1,1],
+".output_R1_paired.fq ", list_fq[(i*2)-1,1],
+ ".output_R1_unpaired.fq ",list_fq[(i*2),1] ,".output_R2_paired.fq ",list_fq[(i*2),1] ,".output_R2_unpaired.fq ILLUMINACLIP:Custom_PremierTech.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36", 
+sep = "")
+
+	system(command_trim)
+
+	}
+
+##It did worked!!
+
+####Create a list of the forward read that mothur will be able to create a file to be  used to make the contigs
+
+system("ls -1 *R1_paired.fq >list_forwardR")
+PT
+
+###Using these files I created a txt file with the name of the sample (***) and the forward and reverse sequence to use, so there are three columns
+
+system("./mothur")
+##Im in mothur
+make.contigs(file=PT_AMF.txt, processors=3)
+
+##Output File Names: 
+#PT_AMF.trim.contigs.fasta
+#PT_AMF.trim.contigs.qual
+#PT_AMF.contigs.report
+#PT_AMF.scrap.contigs.fasta
+#PT_AMF.scrap.contigs.qual
+#PT_AMF.contigs.groups
+
+summary.seqs(fasta=PT_AMF.trim.contigs.fasta, processors=3)
+
+
+#			Start	End	NBases	Ambigs	Polymer	NumSeqs
+#Minimum:	1		42	42		0		2		1
+#2.5%-tile:	1		213	213		0		5		199993
+#25%-tile:	1		397	397		0		5		1999930
+#Median: 	1		398	398		0		6		3999859
+#75%-tile:	1		400	400		0		6		5999788
+#97.5%-tile:	1	404	404		4		6		7799725
+#Maximum:	1		597	597		68		300		7999717
+#Mean:	1	380.384	380.384	0.568611	5.64152
+# of Seqs:	7,999,717
+
+###We had 8,181,190 reads to start with, we now have 7,999,717 reads (so 97.78% of the reads were kept)
+
+###We are going to see if the trim function of mothur will detect other things to lay off such and the ambigs and the polymers
+
+screen.seqs(fasta=PT_AMF.trim.contigs.fasta, maxambig=0, maxhomop=10, processors=3)
+
+##Output File Names: 
+#PT_AMF.trim.contigs.good.fasta
+#PT_AMF.trim.contigs.bad.accnos
+
+##Now lets see how many sequences it removed
+summary.seqs(fasta=PT_AMF.trim.contigs.good.fasta, processors=3)
+
+#		Start	End	NBases	Ambigs	Polymer	NumSeqs
+#Minimum:	1	47	47	0	2	1
+#2.5%-tile:	1	339	339	0	5	167781
+#25%-tile:	1	398	398	0	5	1677804
+#Median: 	1	399	399	0	6	3355607
+#75%-tile:	1	400	400	0	6	5033410
+#97.5%-tile:	1	405	405	0	6	6543433
+#Maximum:	1	528	528	0	10	6711213
+#Mean:	1	394.859	394.859	0	5.69415
+# of Seqs:	6,711,213
+
+##We had 7,999,717 and now we have 6,711,213 sequences (so we kept 84% of the sequences)
+##The former technic kept 8,469,065 sequences
+
+###Get the list. To get a new list of the sequences #####
+
+list.seqs(fasta=PT_AMF.trim.contigs.good.fasta)
+
+###Output File Names: 
+##PT_AMF.trim.contigs.good.accnos
+
+###Get the groups ###
+##We will do a new group file based on the new sequence list
+get.seqs(accnos=PT_AMF.trim.contigs.good.accnos, group=PT_AMF.contigs.groups)
+
+##Output File Names: 
+#PT_AMF.contigs.pick.groups
+
+###Retrieve the libraries into individual files
+
+###This step is to accommodate the next step using Qiime
+split.groups(fasta=PT_AMF.trim.contigs.good.fasta, group=PT_AMF.contigs.pick.groups)
+##Example of one of the 122 output files:
+##PT_AMF.trim.contigs.good.B1P1_MV4.fasta
+
+###I had this warning (maybe it will cause problems in the future):  group T3BT-BE contains illegal 
+##characters in the name. Group names should not include :, -, or / characters.  The ':' character is a special character
+## used in trees. Using ':' will result in your tree being unreadable by tree reading software.  The '-' character is a special
+## character used by mothur to parse group names.  Using the '-' character will prevent you from selecting groups. The '/' character
+## will created unreadable filenames when mothur includes the group in an output filename.
+
+quit()
+###First make the mappling file containing the library name and files names and description of individual library
+system("ls -1 PT_AMF.trim.contigs.good.* >list_map")
+
+##Put that list in R
+list_map = read.table("list_map", stringsAsFactors = F, header = F)
+
+##And then I used Excel to update the map file 
+
+
+#\\\\\\\\\\\\\\\\\\\\\\\\\\/Change to Qiime \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+system("macqiime")
+
+#\\\\\\\\\\\\\\\\\\\\\\\\\\/Version with Usearch \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+####First attempt using usearch. The thing is that usearch can just handle small databases. So the first time around we: 
+##Because the combined file will be to big, we will use two PT_map file to create two fasta file that we will later combine
+
+###Validate the mapping file:
+#validate_mapping_file.py -m PT_map1.txt -o check_id_output/ -p -b -j Description
+#validate_mapping_file.py -m PT_map2.txt -o check_id_output2/ -p -b -j Description
+
+
+##To validate a mapping file without barecodesequences and primer you'll need to set -p and -b so the function knows they don't exist
+##The above mapping file will still show a warning-as it is lacking any barcodes, it has no way to differentiate sequences, and thus can not be used for demultiplexing.
+## However, such warnings can be ignored if the mapping file is being used for steps downstream of demultiplexing.
+## Qiime created a new map file in which the _ in the sampleID were replace by . it is now call PT_map_corrected we are going to use this map file for future analyses
+
+##Add Qiime labels
+
+##This step is to convert and merge fasta files to the Qiime format
+add_qiime_labels.py -i /Users/Jacynthe/Desktop/UbuntuShare/02_PremierTech -m PT_map1_corrected.txt -c InputFileName  -o PT_combined.seqs1_fasta
+##So qiime created a folder called PT_combined.seqs_fasta in which you can find the file combined.seqs.fna (I renamed it combined_seqs1.fa)
+
+add_qiime_labels.py -i /Users/Jacynthe/Desktop/UbuntuShare/02_PremierTech -m PT_map2_corrected.txt -c InputFileName  -o PT_combined.seqs2_fasta
+##So qiime created a folder called PT_combined.seqs_fasta in which you can find the file combined.seqs.fna (I renamed it combined_seqs2.fa)
+
+###Change the format for uParse ### 
+
+##It is to accommodate the uparse (OTU clustering program we are going to use) format
+##You need to have in the directory the bmp-Qiime2Uparse script ****
+##You also need to put the fna file in the mother directory
+perl bmp-Qiime2Uparse.pl -i combined_seqs1.fna -o PT_combined_uparse1.fa
+#Qiime created a file (in the main directory) called PT_combined_uparse1.fa
+
+perl bmp-Qiime2Uparse.pl -i combined_seqs2.fna -o PT_combined_uparse2.fa
+#Qiime created a file (in the main directory) called PT_combined_uparse2.fa
+
+##Dereplicate the reads
+##This step is to dereplicate the similar reads (equivalent of finding unique read in mothur)
+##You need to have the usearch linux version in the folder you are using
+
+/Users/Jacynthe/Desktop/UbuntuShare/02_PremierTech/usearch9.2.64_i86osx32  -fastx_uniques PT_combined_uparse1.fa -fastaout PT_combined_uparse_unique1.fasta -sizeout
+##-fastaout= specifies a FASTA output file for the unique sequences. Sequences are sorted by decreasing abudance
+##-sizeout means that it will add the size number of each reprentative sequences
+#3273775 seqs, 1711905 uniques, 1541541 singletons (90.0%)
+#Output file: PT_combined_uparse_unique1.fasta
+
+/Users/Jacynthe/Desktop/UbuntuShare/02_PremierTech/usearch9.2.64_i86osx32  -fastx_uniques PT_combined_uparse2.fa -fastaout PT_combined_uparse_unique2.fasta -sizeout
+##-fastaout= specifies a FASTA output file for the unique sequences. Sequences are sorted by decreasing abudance
+##-sizeout means that it will add the size number of each reprentative sequences
+##3437438 seqs, 1652690 uniques, 1480940 singletons (89.6%)
+#Output file: PT_combined_uparse_unique2.fasta
+
+##Re-combined the files before classifying them by size order
+cat PT_combined_uparse_unique1.fasta PT_combined_uparse_unique2.fasta > PT_combined_uparse_unique.fasta 
+
+
+#\\\\\\\\\\\\\\\\\\\\\\\\\\/ A) Version with Vsearch \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+##Installing vsearch
+wget https://github.com/torognes/vsearch/releases/download/v2.4.2/vsearch-2.4.2-macos-x86_64.tar.gz
+tar xzf vsearch-2.4.2-macos-x86_64.tar.gz
+
+##Validate mapping files
+validate_mapping_file.py -m PT_map.txt -o check_id_output/ -p -b -j Description
+##To validate a mapping file without barecodesequences and primer you'll need to set -p and -b so the function knows they don't exist
+##The above mapping file will still show a warning-as it is lacking any barcodes, it has no way to differentiate sequences, and thus can not be used for demultiplexing.
+## However, such warnings can be ignored if the mapping file is being used for steps downstream of demultiplexing.
+## Qiime created a new map file in which the _ in the sampleID were replace by . it is now call PT_map_corrected we are going to use this map file for future analyses
+
+##Add Qiime labels
+##This step is to convert and merge fasta files to the Qiime format
+add_qiime_labels.py -i /Users/Jacynthe/Desktop/UbuntuShare/02_PremierTech -m PT_map_corrected.txt -c InputFileName  -o PT_combined_seqs.fasta
+##So qiime created a folder called PT_combined_seqs.fasta in which you can find the file combined_seqs.fna 
+
+###Change the format for uParse ### 
+##It is to accommodate the uparse (OTU clustering program we are going to use) format
+##You need to have in the directory the bmp-Qiime2Uparse script ****
+##You also need to put the fna file in the mother directory
+perl bmp-Qiime2Uparse.pl -i combined_seqs.fna -o PT_combined_uparse.fa
+#Qiime created a file (in the main directory) called PT_combined_uparse.fa
+
+##Dereplicate the reads
+##This step is to dereplicate the similar reads (equivalent of finding unique read in mothur) and to remove singleton
+##You need to have the vsearch version in the folder you are using
+/Users/Jacynthe/Desktop/UbuntuShare/02_PremierTech/vsearch  -derep_fulllength PT_combined_uparse.fa --output PT_combined_uparse_unique.fasta --minuniquesize 2 -sizeout
+##-fastaout= specifies a FASTA output file for the unique sequences. Sequences are sorted by decreasing abudance
+##-sizeout means that it will add the size number of each reprentative sequences
+#3263206 unique sequences
+#Output file: PT_combined_uparse_unique.fasta
+
+####Put the sequences in order by size (This setp will put the sequences in order according to the size of of the annotation)
+###Sort sequences by decreasing size annotation, which usually refers to the size of a cluster. The size is specified by a field size=N; Size annotations are used to indicate cluster sizes of representative sequences.
+
+./vsearch -sortbysize PT_combined_uparse_unique.fasta  --output PT_combined_uparse_unique_sorted.fasta
+##Output:PT_combined_uparse_unique_sorted.fasta
+
+########### i) First way to detect chimera: using unoise with usearch   ############# 
+##Since the file have now a reasonable size, we can now use unoise
+usearch9.2.64_i86osx32 -unoise2 PT_combined_uparse_unique_sorted.fasta -tabbedout denoisedout -fastaout PT_combined_denoised.fasta
+#00:01 203Mb   100.0% Word stats
+#00:01 203Mb   100.0% Alloc rows
+#00:01 203Mb   100.0% Build index
+#00:03 331Mb   100.0% Reading PT_combined_uparse_unique_sorted.fasta
+#00:20 379Mb   100.0% 5033 amplicons, 1954804 bad (size >= 4)       
+#08:51 383Mb   100.0% 705 good, 4328 chimeras   (86% of the sequences were tagged as chemiric)            
+#08:51 383Mb   100.0% Writing amplicons 
+##Output: PT_combined_denoised.fasta
+##Robert Edgar wrote to me that he doesnt recommand doing the OTU clustering because it often groups different species and strains into one OTU. He says that it is better just to run unois, the output 
+##from unois is already a good set of OTUs. Denoising gives better biological resolution than 97% OTU clustering
+
+##PT_combined_uparse_unique_sorted.fasta = 150.6 Mo (154214.4 ko)
+##PT_combined_denoised.fasta = 294 ko 
+##1 Mo in 1024 ko
+##So the denoised files is 0.2% the size of the first files
+
+###Change the format
+##this step is to change the format to accommodate the uparse and qiime
+###Need to put the fasta_formatter script in your folder
+./fasta_formatter -i PT_combined_denoised.fasta -o PT_combined_denoised_formatted.fasta
+
+###Change the format again
+##this step is to change the format to accomodate the uparse and qiime
+perl bmp-otuName.pl -i PT_combined_denoised_formatted.fasta -o PT_combined_denoised_formated2.fasta
+##Output file: PT_combined_denoised_formated2.fasta
+
+###Mapping the original reads
+##This step is to map the original reads agains the OTU file
+###plus means the orientation of the reads
+###-id is to set the cutoff of matching to 0.97 which means 97% identity or more
+usearch9.2.64_i86osx32 -usearch_global PT_combined_uparse.fa   -db PT_combined_denoised_formated2.fasta -strand plus -id 0.97 -uc PT_AMF_unoise_map.uc
+##Output file: PT_AMF_unoise_map.uc  
+
+#00:00 2.1Mb   100.0% Reading PT_combined_denoised_formated2.fasta
+#00:00 1.8Mb   100.0% Masking (fastnucleo)                        
+#00:00 2.7Mb   100.0% Word stats          
+#00:00 2.7Mb   100.0% Alloc rows
+#00:00 3.7Mb   100.0% Build index
+#04:27 39Mb    100.0% Searching, 91.6% matched
+
+###Assign OTUs with taxonomy
+##This step is to assign the taxonomic categroy to each OTU
+assign_taxonomy.py -i PT_combined_denoised_formated2.fasta -o PT_assign_taxonomy_unoise.fa -r /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/rep_set/rep_set_18S_only/97/97_otus_18S.fasta -t /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/taxonomy/18S_only/97/consensus_taxonomy_all_levels.txt 
+##Qiime created a folder called PT_assign_taxonomy_unoise.fa which contain: PT_combined_denoised_formated2_tax_assignments.txt. The file is not aligned
+
+##Align OTUs with ref
+##This step is to align the OTUs with the ref
+align_seqs.py -i PT_combined_denoised_formated2.fasta  -o PT_unoise_rep_set_align -t /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/rep_set_aligned/97/97_otus_aligned.fasta 
+##Qiime created a folder again: PT_unoise_rep_set_align; which contain the files PT_combined_denoised_formated2_aligned.fasta; ...
+##You need to extract back the fasta file (the *aligned.fasta one)  to do the next step
+##I used the default even if it is not the one used in our pipeline
+
+##Make the phylogeny tree
+##This step is to make the phylogenic tree
+make_phylogeny.py -i PT_combined_denoised_formated2_aligned.fasta -o PT_denoised_aligned_rep_set.tre
+##Output file: PT_otu_aligned_rep_set.tre
+##Seems a bit more complicated than the previous one
+
+###Change the format for the OTU table 
+##This step is to change the format of the file to accommodate Qimme
+python bmp-map2qiime.py PT_AMF_unoise_map.uc >PT_AMF_unoise_table.txt
+##Output: PT_AMF_unoise_table.txt
+
+###Make the OTU table 
+##This is to make the otu table for the downstream analysis 
+make_otu_table.py -i PT_AMF_unoise_table.txt -t PT_combined_denoised_formated2_tax_assignments.txt -o PT_AMF_unoise_table.biom
+##Output: PT_AMF_unoise_table.biom
+
+###Summarize table
+biom summarize-table -i PT_AMF_unoise_table.biom -o PT_AMF_unoise_results_biom_table
+##There are 6,146,241 reads in the file (mean: 50379 and sd: 14204)
+
+###Filtrate to keep only the fungi
+##This step is mainly to filtrate out the unassigned reads, archaea, mitochondria and chloroplasts
+filter_taxa_from_otu_table.py -i PT_AMF_unoise_table.biom -o PT_AMF_unoise_onlyfungi_table.biom -p D_3__Fungi
+##Output: PT_AMF_unoise_onlyfungi_table.biom
+
+###Summarize the read numbers
+##This step is to get the idea about how many reads left in each library
+biom summarize-table -i PT_AMF_unoise_onlyfungi_table.biom -o PT_AMF_unoise_onlyfungi.results_biom_table
+##Output: PT_AMF.onlyfungi.results_biom_table 
+##There are 4148439 reads in the file; average reads per sample: 34 005 ; sd: 19 332 . Only six samples have fewer than 200 reads left: E10.BE; E5.BE; E4.BE, E6.BE, T3BT.BT, E3.BE
+
+###Filtrate to keep only the glomeromycota
+##This step is mainly to filtrate out the unassigned reads, archaea, mitochondria and chloroplasts
+filter_taxa_from_otu_table.py -i PT_AMF_unoise_onlyfungi_table.biom -o PT_AMF_onlyGlomero_unoise_table.biom -p D_4__Glomeromycota
+##Output: PT_AMF_onlyGlomero_unoise_table.biom
+
+###Summarize the read numbers
+##This step is to get the idea about how many reads left in each library
+biom summarize-table -i PT_AMF_onlyGlomero_unoise_table.biom -o PT_AMF_onlyGlomero_unoise_results_biom_table
+##Output: PT_AMF.onlyGlomero.results_biom_table
+##There are 4,116,032 reads in the file; average reads per sample: 33,737 reads; sd: 19,413. Only three samples have fewer than 200 reads left:  E6.BE, E10.BE, E5.BE, T3BT.BT, E4.BE, E3.BE
+###According to Rim it is normal to have fewer reads than for bacteria, so you can keep a sample if its number of reads is higher than 200 and its coverage about 90%
+##We weill run the major diversity analyses to see the coverage and then filter samples out of the otu table. 
+
+###Process the major diversity analyses
+#This step process alpha and beta-diversity analyses including the unifrac
+core_diversity_analyses.py -i PT_AMF_onlyGlomero_unoise_table.biom -o PT_AMF_unoise_onlyGlomero_output2 -m PT_map_corrected.txt -t PT_denoised_aligned_rep_set.tre -e 125 -p diversity_param.txt
+##Qiime creates a folder call PT_AMF_onlyGlomero_output that has all the results. The most interesting part is the index.html
+##I set the first limit at 671 reads: a plateau was reached in the rarefaction curves at around 125 reads,  but we still will eliminate samples E6.BE, E10.BE, E5.BE, T3BT.BT, E4.BE, E3.BE
+
+
+
+########### ii) Second way to detect chimera: cluster and chimera detection using vsearch   ############# 
+###a) Cluster
+./vsearch --cluster_size PT_combined_uparse_unique_sorted.fasta --centroids PT_centroids.fasta --id 0.98
+##Output: PT_centroids.fasta (1.6 Mo)
+
+b) Chimera detection
+./vsearch --uchime_ref PT_centroids.fasta -db /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/rep_set/rep_set_18S_only/97/97_otus_18S.fasta --nonchimeras PT_cluster_nonchimeras.fasta
+#Found 1542 (42.7%) chimeras, 1995 (55.3%) non-chimeras,
+#and 73 (2.0%) borderline sequences in 3610 unique sequences.
+#Taking abundance information into account, this corresponds to
+#14335 (2.3%) chimeras, 598952 (97.6%) non-chimeras
+##Output:PT_cluster_nonchimeras.fasta
+
+###Change the format
+##this step is to change the format to accommodate the uparse and qiime
+###Need to put the fasta_formatter script in your folder
+./fasta_formatter -i PT_cluster_nonchimeras.fasta -o PT_cluster_nonchimeras_formatted.fasta
+
+###Change the format again
+##this step is to change the format to accomodate the uparse and qiime
+perl bmp-otuName.pl -i PT_cluster_nonchimeras_formatted.fasta -o PT_cluster_nonchimeras_formated2.fasta
+##Output file: PT_cluster_nonchimeras_formated2.fasta
+
+###Mapping the original reads
+##This step is to map the original reads agains the OTU file
+###plus means the orientation of the reads
+###-id is to set the cutoff of matching to 0.97 which means 97% identity or more
+usearch9.2.64_i86osx32 -usearch_global PT_combined_uparse.fa   -db PT_cluster_nonchimeras_formated2.fasta -strand plus -id 0.97 -uc PT_AMF_cluster_map.uc
+##Output file: PT_AMF_cluster_map.uc
+
+#00:00 3.1Mb   100.0% Reading PT_cluster_nonchimeras_formated2.fasta
+#00:00 2.4Mb   100.0% Masking (fastnucleo)                          
+#00:00 3.3Mb   100.0% Word stats          
+#00:00 3.3Mb   100.0% Alloc rows
+#00:00 5.9Mb   100.0% Build index
+#05:45 41Mb    100.0% Searching, 93.6% matched
+
+###Assign OTUs with taxonomy
+##This step is to assign the taxonomic categroy to each OTU
+assign_taxonomy.py -i PT_cluster_nonchimeras_formated2.fasta -o PT_assign_taxonomy_clustered.fa -r /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/rep_set/rep_set_18S_only/97/97_otus_18S.fasta -t /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/taxonomy/18S_only/97/consensus_taxonomy_all_levels.txt 
+##Qiime created a folder called PT_assign_taxonomy_clustered.fa which contain: PT_cluster_nonchimeras_formated2_tax_assignments.txt. The file is not aligned
+
+##Align OTUs with ref
+##This step is to align the OTUs with the ref
+align_seqs.py -i PT_cluster_nonchimeras_formated2.fasta  -o PT_clustered_rep_set_align -t /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/rep_set_aligned/97/97_otus_aligned.fasta 
+##Qiime created a folder again: PT_clustered_rep_set_align; which contain the files PT_cluster_nonchimeras_formated2_aligned.fasta; ...
+##You need to extract back the fasta file (the *aligned.fasta one)  to do the next step
+##I used the default even if it is not the one used in our pipeline
+
+##Make the phylogeny tree
+##This step is to make the phylogenic tree
+make_phylogeny.py -i PT_cluster_nonchimeras_formated2_aligned.fasta -o PT_clustered_aligned_rep_set.tre
+##Output file: T_clustered_aligned_rep_set.tre
+##Seems a bit more complicated than the previous one
+
+###Change the format for the OTU table 
+##This step is to change the format of the file to accommodate Qimme
+python bmp-map2qiime.py PT_AMF_cluster_map.uc >PT_AMF_clustered_table.txt
+##Output: PT_AMF_clustered_table.txt
+
+###Make the OTU table 
+##This is to make the otu table for the downstream analysis 
+make_otu_table.py -i PT_AMF_clustered_table.txt -t PT_cluster_nonchimeras_formated2_tax_assignments.txt -o PT_AMF_clustered_table.biom
+##Output: PT_AMF_clustered_table.biom
+
+###Summarize table
+biom summarize-table -i PT_AMF_clustered_table.biom -o PT_AMF_cluster_results_biom_table
+##There are 6,146,241 reads in the file (mean: 50379 and sd: 14204)
+
+###Filtrate to keep only the fungi
+##This step is mainly to filtrate out the unassigned reads, archaea, mitochondria and chloroplasts
+filter_taxa_from_otu_table.py -i PT_AMF_clustered_table.biom -o PT_AMF_cluster_onlyfungi_table.biom -p D_3__Fungi
+##Output: PT_AMF_cluster_onlyfungi_table.biom
+
+###Summarize the read numbers
+##This step is to get the idea about how many reads left in each library
+biom summarize-table -i PT_AMF_cluster_onlyfungi_table.biom -o PT_AMF_cluster_onlyfungi.results_biom_table
+##Output: PT_AMF_cluster_onlyfungi.results_biom_table
+##There are 4148439 reads in the file; average reads per sample: 34 005 ; sd: 19 332 . Only six samples have fewer than 200 reads left: E10.BE; E5.BE; E4.BE, E6.BE, T3BT.BT, E3.BE
+
+###Filtrate to keep only the glomeromycota
+##This step is mainly to filtrate out the unassigned reads, archaea, mitochondria and chloroplasts
+filter_taxa_from_otu_table.py -i PT_AMF_cluster_onlyfungi_table.biom -o PT_AMF_onlyGlomero_cluster_table.biom -p D_4__Glomeromycota
+##Output: PT_AMF_onlyGlomero_cluster_table.biom
+
+###Summarize the read numbers
+##This step is to get the idea about how many reads left in each library
+biom summarize-table -i PT_AMF_onlyGlomero_cluster_table.biom -o PT_AMF_onlyGlomero_cluster_results_biom_table
+##Output: PT_AMF.onlyGlomero.results_biom_table
+##There are 4,116,032 reads in the file; average reads per sample: 33,737 reads; sd: 19,413. Only three samples have fewer than 200 reads left:  E6.BE, E10.BE, E5.BE, T3BT.BT, E4.BE, E3.BE
+###According to Rim it is normal to have fewer reads than for bacteria, so you can keep a sample if its number of reads is higher than 200 and its coverage about 90%
+##We weill run the major diversity analyses to see the coverage and then filter samples out of the otu table. 
+
+###Process the major diversity analyses
+#This step process alpha and beta-diversity analyses including the unifrac
+core_diversity_analyses.py -i PT_AMF_onlyGlomero_cluster_table.biom -o PT_AMF_cluster_onlyGlomero_output -m PT_map_corrected.txt -t PT_clustered_aligned_rep_set.tre -e 600 -p diversity_param.txt
+##Qiime creates a folder call PT_AMF_onlyGlomero_output that has all the results. The most interesting part is the index.html
+##I set the first limit at 671 reads: a plateau was reached in the rarefaction curves at around 125 reads,  but we still will eliminate samples E6.BE, E10.BE, E5.BE, T3BT.BT, E4.BE, E3.BE
+
+
+####Result: total number of reads 
+ 					 Unoise			Cluster/chimera
+#All the 18S		6,146,241			6,279,150
+#Just Fungi			4,148,436			4,134,286			
+#Just Glomero		4,116,032			4,101,428
+#Original number of reads: 8,181,190
+
+#So all in all both of them lost 49.7% and 49.9% of the reads. The cluster/chimera lost less sequences when looking at the whole 18S database, but once we only keep the Glomeromycota 
+#the Unoise had more reads classified at glomero. 
+
+
+###So I'll rerun the analyses using the unoise function
+
+##Filter samples out of the biom table
+filter_samples_from_otu_table.py -i PT_AMF_onlyGlomero_unoise_table.biom -o PT_AMF_OnlyGoodGlomero.otu_table.biom -m PT_map_corrected.txt --output_mapping_fp PT_map_corrected.good.txt -n 500
+##Output: PT_AMF_OnlyGoodGlomero.otu_table.biom; PT_map_corrected.good.txt
+
+##Summarize the read numbers
+biom summarize-table -i PT_AMF_OnlyGoodGlomero.otu_table.biom -o PT_AMF.onlyGoodGlomero.results_biom_table
+##Total count: #of sample: 116; 4,115,563 reads, mean:35,479; sd: 18,296. Le minimum de reads = 671
+
+##Re-run the core diversity analyses on the new db
+core_diversity_analyses.py -i PT_AMF_OnlyGoodGlomero.otu_table.biom -o PT_AMF_GoodGlomero_output -m PT_map_corrected.good.txt -t PT_denoised_aligned_rep_set.tre -e 671 -p diversity_param.txt
+##Coverage is way about 95%
+
+###Convert biom to OTU table 
+##This allow s you to conver biom format to OTU table format
+biom convert -i PT_AMF_OnlyGoodGlomero.otu_table.biom -o PT_AMF.otu_table_from_biom.txt --to-tsv --header-key="taxonomy" --output-metadata-id="ConsensusLineage" --table-type="OTU table"
+#Output: PT_AMF.otu_table_from_biom.txt
+
+##Convert OTU table to Json (version 1 of biom - to be incorporated in mothur)
+biom convert -i PT_AMF.otu_table_from_biom.txt -o PT_AMF.otu.table.json.biom --table-type="OTU table" --to-json
+#Output: PT_AMF.otu.table.json.biom
+
+##Leaving qiime
+exit
+
+##Going into mothur to do a couple of analyses (beta-diversity)
+system("./mothur")
+
+make.shared(biom=PT_AMF.otu.table.json.biom)
+##Output File Names: 
+##PT_AMF.otu.table.json.shared
+
+##Calculating how many reads are left after trimming (for materials and methods)
+count.groups(shared=PT_AMF.otu.table.json.shared)
+#Total seqs: 4,122,831
+#Output File Names: 
+#PT_AMF.otu.table.json.count.summary
+
+###Alpha-diversity analyses
+###First: rarefaction analyses  ###We already had it in qiime (but there are not a lot of flexibility on how we can plot it). We will try with R
+rarefaction.single(shared=PT_AMF.otu.table.json.shared, calc=sobs, freq=500, processors=4)
+##Output File Names: 
+###PT_AMF.otu.table.json.groups.rarefaction
+
+summary.single(shared=PT_AMF.otu.table.json.shared, calc=nseqs-coverage-sobs-invsimpson, subsample=671)
+
+##Output File Names: 
+#PT_AMF.otu.table.json.groups.ave-std.summary
+#PT_AMF.otu.table.json.groups.summary
+
+ ####******* OTU-based: beta diversity
+
+#Now let's calculate the similarity of the membership and structure found in the various samples. 
+#We'll do this with the dist.shared command that will allow us to rarefy our data to a common number of sequences.
+ 
+dist.shared(shared=PT_AMF.otu.table.json.shared, calc=thetayc-braycurtis, subsample=T, processors=3)
+
+##Output File Names: 
+#PT_AMF.otu.table.json.thetayc.userLabel.lt.dist
+#PT_AMF.otu.table.json.braycurtis.userLabel.lt.dist
+#PT_AMF.otu.table.json.thetayc.userLabel.lt.ave.dist
+#PT_AMF.otu.table.json.thetayc.userLabel.lt.std.dist
+#PT_AMF.otu.table.json.braycurtis.userLabel.lt.ave.dist
+#PT_AMF.otu.table.json.braycurtis.userLabel.lt.std.dist
+
+####Build a tree (you can used the UPGMA tree that you have build with R) - according to the yc distance
+##The tree.shared command will generate a newick-formatted tree file that describes the dissimilarity (1-similarity) among multiple groups. 
+##Groups are clustered using the UPGMA algorithm using the distance between communities as calculated using any of the calculators describing the similarity in community membership or structure.
+tree.shared(phylip=PT_AMF.otu.table.json.thetayc.userLabel.lt.ave.dist)
+###Output File Names: 
+#PT_AMF.otu.table.json.thetayc.userLabel.lt.ave.tre
+
+##Building the tree with the bray-curtis distance
+tree.shared(phylip=PT_AMF.otu.table.json.braycurtis.userLabel.lt.ave.dist)
+##Output File Names: 
+#PT_AMF.otu.table.json.braycurtis.userLabel.lt.ave.tre
+
+
+#We can test to deterine whether the clustering within the tree is statistically significant or not using by choosing from the parsimony, unifrac.unweighted, or unifrac.weighted commands.
+#To run these we will first need to create a design file that indicates which treatment each sample belongs to. 
+
+#Using the parsimony command let's look at the pairwise comparisons for crop.
+
+parsimony(tree=PT_AMF.otu.table.json.braycurtis.userLabel.lt.ave.dist, group=PT_crop.design, processors=3)
+##Beverloadge and SwiftCurrent are significantly differnt (ParsScore=11; p<0.001)
+
+
+parsimony(tree=PT_AMF.otu.table.json.braycurtis.userLabel.lt.ave.dist, group=PT_control.design, processors=3)
+##Canola-Lentil-Peas are significantly differnt (ParsSocre=34; p<0.001)
+
+unifrac.weighted(tree=PT_AMF.otu.table.json.braycurtis.userLabel.lt.ave.dist, group=PT_control.design, random=T)
+##0-100 are different at W=0.0435; p<0.001
+##0-50 are different at W=0.055; p<0.001
+##100-50 are different at W=0.037; p<0.001
+
+###Leave Mothur
+system("quit()")
+
+
+###June 22, 2018###
+### this is the analyses with the 97% clustering ####
+###WGRF files shoud be removed ###
+
+
+######April 6th 2017 
+###After blasting sequences from the ZOTUs I realized that a couple of sequences were in fact the same OTU, so I decided to cluster the sequences to 97% similarities
+
+########### ii) Second way to detect chimera: cluster and chimera detection using vsearch   ############# 
+###a) Cluster
+./vsearch --cluster_size PT_combined_uparse_unique_sorted.fasta --centroids PT_centroids.fasta --id 0.97
+#133255018 nt in 334673 seqs, min 47, max 452, avg 398
+#Masking 100%  
+#Sorting by abundance 100%
+#Counting unique k-mers 100%  
+#Clustering 100%  
+#Sorting clusters 100%
+#Writing clusters 100%  
+#Clusters: 1511 Size min 1, max 84356, avg 221.5
+#Singletons: 562, 0.2% of seqs, 37.2% of clusters
+
+##Output: PT_centroids.fasta (631 ko)
+
+b) Chimera detection
+./vsearch --uchime_ref PT_centroids.fasta  -db /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/rep_set/rep_set_18S_only/97/97_otus_18S.fasta --nonchimeras PT_cluster_nonchimeras.fasta
+#Found 693 (45.9%) chimeras, 796 (52.7%) non-chimeras,
+#and 22 (1.5%) borderline sequences in 1511 unique sequences.
+#Taking abundance information into account, this corresponds to
+#7876 (1.4%) chimeras, 547151 (98.6%) non-chimeras,
+#and 86 (0.0%) borderline sequences in 555113 total sequence
+##Output:PT_cluster_nonchimeras.fasta
+
+###Get the sequences:
+pick_rep_set.py -i PT_AMF_cluster_map.uc -f PT_cluster_nonchimeras_formated2.fasta -o rep_seq1.fasta
+pick_rep_set.py -i seqs_otus.txt -f seqs.fna -o rep_set1.fna
+
+
+###Change the format
+##this step is to change the format to accommodate the uparse and qiime
+###Need to put the fasta_formatter script in your folder
+./fasta_formatter -i PT_cluster_nonchimeras.fasta -o PT_cluster_nonchimeras_formatted.fasta
+
+###Change the format again
+##this step is to change the format to accomodate the uparse and qiime
+perl bmp-otuName.pl -i PT_cluster_nonchimeras_formatted.fasta -o PT_cluster_nonchimeras_formated2.fasta
+##Output file: PT_cluster_nonchimeras_formated2.fasta
+
+###Mapping the original reads
+##This step is to map the original reads agains the OTU file
+###plus means the orientation of the reads
+###-id is to set the cutoff of matching to 0.97 which means 97% identity or more
+usearch9.2.64_i86osx32 -usearch_global PT_combined_uparse.fa   -db PT_cluster_nonchimeras_formated2.fasta -strand plus -id 0.97 -uc PT_AMF_cluster_map.uc
+##Output file: PT_AMF_cluster_map.uc
+
+#00:00 2.1Mb   100.0% Reading PT_cluster_nonchimeras_formated2.fasta
+00:00 1.8Mb   100.0% Masking (fastnucleo)                          
+00:00 2.7Mb   100.0% Word stats          
+00:00 2.7Mb   100.0% Alloc rows
+00:00 3.7Mb   100.0% Build index
+05:26 38Mb    100.0% Searching, 92.1% matched
+
+###Assign OTUs with taxonomy
+##This step is to assign the taxonomic categroy to each OTU
+assign_taxonomy.py -i PT_cluster_nonchimeras_formated2.fasta -o PT_assign_taxonomy_clustered.fa -r /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/rep_set/rep_set_18S_only/97/97_otus_18S.fasta -t /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/taxonomy/18S_only/97/consensus_taxonomy_all_levels.txt 
+##Qiime created a folder called PT_assign_taxonomy_clustered.fa which contain: PT_cluster_nonchimeras_formated2_tax_assignments.txt. The file is not aligned
+
+##Align OTUs with ref (takes about 15 minutes)
+##This step is to align the OTUs with the ref
+align_seqs.py -i PT_cluster_nonchimeras_formated2.fasta  -o PT_clustered_rep_set_align -t /Users/Jacynthe/Desktop/LatestVersionSoftwareBioinfo/SILVA_128_QIIME_release/rep_set_aligned/97/97_otus_aligned.fasta 
+##Qiime created a folder again: PT_clustered_rep_set_align; which contain the files PT_cluster_nonchimeras_formated2_aligned.fasta; ...
+##You need to extract back the fasta file (the *aligned.fasta one)  to do the next step
+##I used the default even if it is not the one used in our pipeline
+
+##Make the phylogeny tree (takes about 10 minutes)
+##This step is to make the phylogenic tree
+make_phylogeny.py -i PT_cluster_nonchimeras_formated2_aligned.fasta -o PT_clustered_aligned_rep_set.tre
+##Output file: T_clustered_aligned_rep_set.tre
+##Seems a bit more complicated than the previous one
+
+###Change the format for the OTU table 
+##This step is to change the format of the file to accommodate Qimme
+python bmp-map2qiime.py PT_AMF_cluster_map.uc >PT_AMF_clustered_table.txt
+##Output: PT_AMF_clustered_table.txt
+
+###Make the OTU table 
+##This is to make the otu table for the downstream analysis 
+make_otu_table.py -i PT_AMF_clustered_table.txt -t PT_cluster_nonchimeras_formated2_tax_assignments.txt -o PT_AMF_clustered_table.biom
+##Output: PT_AMF_clustered_table.biom
+
+###Summarize table
+biom summarize-table -i PT_AMF_clustered_table.biom -o PT_AMF_cluster_results_biom_table
+##There are 6,177,296 reads in the file (mean: 50633 and sd: 14340)
+
+###Filtrate to keep only the fungi
+##This step is to keep only the fungi reads
+filter_taxa_from_otu_table.py -i PT_AMF_clustered_table.biom -o PT_AMF_cluster_onlyfungi_table.biom -p D_3__Fungi
+##Output: PT_AMF_cluster_onlyfungi_table.biom
+
+###Summarize the read numbers
+##This step is to get the idea about how many reads left in each library
+biom summarize-table -i PT_AMF_cluster_onlyfungi_table.biom -o PT_AMF_cluster_onlyfungi.results_biom_table
+##Output: PT_AMF_cluster_onlyfungi.results_biom_table
+##There are 4,054,513 reads in the file; average reads per sample: 405,4513 ; sd: 18,997 . Only four samples have fewer than 200 reads left: E10.BE; E5.BE; E4.BE, E6.BE, T3BT.BT, E3.BE
+
+###Filtrate to keep only the glomeromycota
+##This step is to keep only the glomeromycota reads
+filter_taxa_from_otu_table.py -i PT_AMF_cluster_onlyfungi_table.biom -o PT_AMF_onlyGlomero_cluster_table.biom -p D_4__Glomeromycota
+##Output: PT_AMF_onlyGlomero_cluster_table.biom
+
+###Summarize the read numbers
+##This step is to get the idea about how many reads left in each library
+biom summarize-table -i PT_AMF_onlyGlomero_cluster_table.biom -o PT_AMF_onlyGlomero_cluster_results_biom_table
+##Output: PT_AMF.onlyGlomero.results_biom_table
+##There are 4,022,253 reads in the file; average reads per sample: 32,969 reads; sd: 19,070. Only six samples have fewer than 200 reads left:  E6.BE, E10.BE, E5.BE, T3BT.BT, E4.BE, E3.BE
+###According to Rim it is normal to have fewer reads than for bacteria, so you can keep a sample if its number of reads is higher than 200 and its coverage about 90%
+##We will filter samples E6.BE, E10.BE, E5.BE, T3BT.BT, E4.BE, E3.BE  out of the otu table 
+
+##Filter samples out of the biom table
+filter_samples_from_otu_table.py -i PT_AMF_onlyGlomero_cluster_table.biom -o PT_AMF_OnlyGoodGlomero_cluster_table.biom -m PT_map_corrected.txt --output_mapping_fp PT_map_corrected.good.txt -n 500
+##Output: PT_AMF_OnlyGoodGlomero_cluster_table.biom; PT_map_corrected.good.txt
+
+##Summarize the read numbers
+biom summarize-table -i PT_AMF_OnlyGoodGlomero_cluster_table.biom -o PT_AMF.onlyGoodGlomero_cluster.results_biom_table
+##Output:PT_AMF.onlyGoodGlomero_cluster.results_biom_table
+##Total count: #of sample: 116; 4,021,797 reads, mean:34671; sd: 17999. Le minimum de reads = 651
+
+##Re-run the core diversity analyses on the new db
+core_diversity_analyses.py -i PT_AMF_OnlyGoodGlomero_cluster_table.biom -o PT_AMF_GoodGlomero_cluster_output -m PT_map_corrected.good.txt -t PT_clustered_aligned_rep_set.tre -e 651 -p diversity_param.txt
+
+
+###Convert biom to OTU table 
+##This allow s you to conver biom format to OTU table format
+biom convert -i PT_AMF_OnlyGoodGlomero_cluster_table.biom -o PT_AMF_OnlyGoodGlomero_cluster_table.from_biom.txt --to-tsv --header-key="taxonomy" --output-metadata-id="ConsensusLineage" --table-type="OTU table"
+#Output: PT_AMF_OnlyGoodGlomero_cluster_table.from_biom.txt
+
+##Convert OTU table to Json (version 1 of biom - to be incorporated in mothur)
+biom convert -i PT_AMF_OnlyGoodGlomero_cluster_table.from_biom.txt -o PT_AMF_clustered.otu.table.json.biom --table-type="OTU table" --to-json
+#Output: PT_AMF_clustered.otu.table.json.biom 
+
+##Leaving qiime
+exit
+
+##Going into mothur to do a couple of analyses (beta-diversity)
+system("./mothur")
+
+make.shared(biom=PT_AMF_clustered.otu.table.json.biom)
+#Output File Names: 
+#PT_AMF_clustered.otu.table.json.shared
+
+##Calculating how many reads are left after trimming (for materials and methods)
+count.groups(shared=PT_AMF_clustered.otu.table.json.shared)
+#Total seqs: 4,021,797
+#Output File Names: 
+#PT_AMF_clustered.otu.table.json.count.summary
+
+###Alpha-diversity analyses
+###First: rarefaction analyses  ###We already had it in qiime (but there are not a lot of flexibility on how we can plot it). We will try with R
+rarefaction.single(shared=PT_AMF_clustered.otu.table.json.shared, calc=sobs, freq=500, processors=4)
+###Output File Names: 
+#PT_AMF_clustered.otu.table.json.groups.rarefaction
+
+summary.single(shared=PT_AMF_clustered.otu.table.json.shared, calc=nseqs-coverage-sobs-invsimpson, subsample=651)
+##Output File Names:  
+#PT_AMF_clustered.otu.table.json.groups.ave-std.summary
+#PT_AMF_clustered.otu.table.json.groups.summary
+
+ ####******* OTU-based: beta diversity
+
+#Now let's calculate the similarity of the membership and structure found in the various samples. 
+#We'll do this with the dist.shared command that will allow us to rarefy our data to a common number of sequences.
+ 
+dist.shared(shared=PT_AMF_clustered.otu.table.json.shared, calc=thetayc-braycurtis, subsample=T, processors=3)
+
+##Output File Names: 
+#PT_AMF_clustered.otu.table.json.thetayc.userLabel.lt.dist
+#PT_AMF_clustered.otu.table.json.braycurtis.userLabel.lt.dist
+#PT_AMF_clustered.otu.table.json.thetayc.userLabel.lt.ave.dist
+#PT_AMF_clustered.otu.table.json.thetayc.userLabel.lt.std.dist
+#PT_AMF_clustered.otu.table.json.braycurtis.userLabel.lt.ave.dist
+#PT_AMF_clustered.otu.table.json.braycurtis.userLabel.lt.std.dist
+
+####Build a tree (you can used the UPGMA tree that you have build with R) - according to the yc distance
+##The tree.shared command will generate a newick-formatted tree file that describes the dissimilarity (1-similarity) among multiple groups. 
+##Groups are clustered using the UPGMA algorithm using the distance between communities as calculated using any of the calculators describing the similarity in community membership or structure.
+tree.shared(phylip=PT_AMF_clustered.otu.table.json.thetayc.userLabel.lt.ave.dist)
+###Output File Names: 
+#PT_AMF_clustered.otu.table.json.thetayc.userLabel.lt.ave.tre
+
+##Building the tree with the bray-curtis distance
+tree.shared(phylip=PT_AMF_clustered.otu.table.json.braycurtis.userLabel.lt.ave.dist)
+##Output File Names: 
+#PT_AMF_clustered.otu.table.json.braycurtis.userLabel.lt.ave.tre
+
+
+#We can test to deterine whether the clustering within the tree is statistically significant or not using by choosing from the parsimony, unifrac.unweighted, or unifrac.weighted commands.
+#To run these we will first need to create a design file that indicates which treatment each sample belongs to. 
+
+#Using the parsimony command let's look at the pairwise comparisons for crop.
+
+parsimony(tree=PT_AMF_clustered.otu.table.json.braycurtis.userLabel.lt.ave.tre, group=PT_crop.design, processors=3)
+##Beverloadge and SwiftCurrent are significantly differnt (ParsScore=11; p<0.001)
+
+
+parsimony(tree=PT_AMF.otu.table.json.braycurtis.userLabel.lt.ave.dist, group=PT_control.design, processors=3)
+##Canola-Lentil-Peas are significantly differnt (ParsSocre=34; p<0.001)
+
+parsimony(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_crop.design, groups=all, processors=10)
+##Canola-Lentil are different at ParsScore=4; p<0.001
+##Canola-Pea are different at ParsScore=30; p<0.001
+##Lentil-Pea are different at ParsScore=4; p<0.001
+
+parsimony(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_fertility.design, processors=10)
+##Not significantly different (ParsScore=135; p=0.429)
+
+parsimony(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_fertility.design, groups=all, processors=10)
+##0-100 are not different at ParsScore=66; p=0.71
+##0-50 are not different at ParsScore=60; p=0.156
+##50-100 are not different at ParsScore=68; p=0.873
+
+parsimony(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_inoc.design, groups=all, processors=10)
+##Brassica and no are different at ParsScore=23; p<0.001
+##Brassica and yes are different at ParsScore=26; p<0.001
+##Yes and no are different at ParsScore=72; p=0.683
+
+###So looking at the tree, we can say that the OTUs can be grouped based on their location and on the crop
+
+##Let's do the unifrace weighted and unweighted
+unifrac.weighted(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_location.design, random=T)
+##Beaverloadge and Swift Current are different at W=0.10622; p<0.001
+
+unifrac.weighted(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_crop.design, random=T)
+##Canola-Lentil are different at W=0.648; p<0.001
+##Canola-Pea are different at W=0.5515; p<0.001
+##Lentil-Pea are different at W=0.2370; p<0.001
+
+unifrac.weighted(tree=PT_AMF.otu.table.json.braycurtis.userLabel.lt.ave.dist, group=PT_control.design, random=T)
+##0-100 are different at W=0.0435; p<0.001
+##0-50 are different at W=0.055; p<0.001
+##100-50 are different at W=0.037; p<0.001
+
+unifrac.weighted(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_inoc.design, random=T)
+##No and yes are different at W=0.033; p<0.001
+
+
+unifrac.unweighted(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_location.design, random=T)
+##Beaverloadge and Swift Current are different at W=0.69634; p<0.001
+
+unifrac.unweighted(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_crop.design, random=T)
+##Canola-Lentil-Pea are different at W=0.634537; p<0.001
+
+unifrac.unweighted(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_fertility.design, random=T)
+##0-100-50 are not different at W=0.5786; p=0.161
+
+unifrac.unweighted(tree=WGRF_16S.otu.table.json.thetayc.userLabel.lt.ave.tre, group=WGRF_16S_inoc.design, random=T)
+##No - yes - Brassica are not different at W=0.5656; p=0.346
+
+###Leave Mothur
+system("quit()")
+
+
+
