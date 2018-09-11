@@ -8,6 +8,7 @@ library(lme4)
 library(ape)
 library(pals)
 library(dplyr)
+library(ggplot2)
 library(RVAideMemoire)
 
 ###Preparing OTU table and sampling design----
@@ -103,9 +104,9 @@ colnames(OTU.norm.barplot) = c("wheat.inoc", "wheat.ctl","corn.inoc","corn.ctl",
 #barplot
 dev.new()
 par(mar=c(16,4,4,2))
-barplot(OTU.norm.barplot,beside = F,font = 3, axisnames = T,ylab = "Relative OTU abundance",col = c(cols25(),rep("grey",60)), las = 3, xpd = T,names.arg =  rep(c("Inoculated","Control"),3),space = 0.05)
+barplot(OTU.norm.barplot,beside = F,font = 3, border = 0, axisnames = T,ylab = "Relative OTU abundance",col = c(cols25(),rep("grey",60)), las = 3, xpd = T,names.arg =  rep(c("Inoculated","Control"),3),space = 0.05)
 text(y = rep(1.08,6), x = c(1.1,3.2,5.2), labels = c("Wheat","Corn","Soy"), font = 2,cex = 2,xpd = T)
-legend(0.1,-0.4,fill = cols25(),legend =  paste(rownames(OTU.norm.barplot)[1:10],rep(";",10),taxo[1:10],c("*",rep("",9)),sep = ""),cex = 0.75,xpd =T)
+legend(0.1,-0.4,border = "transparent",fill = cols25(),legend =  paste(rownames(OTU.norm.barplot)[1:10],rep(";",10),taxo[1:10],c("*",rep("",9)),sep = ""),cex = 0.75,xpd =T)
 dev.print(device=pdf, "figures/figure2_OTUabundance.pdf", onefile=FALSE)
 dev.off()
 
@@ -129,16 +130,16 @@ dev.new()
 par(mar= c(6,4,4,2))
 
 #genera
-g = barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.GENERA)[,2:7]),
+g = barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.GENERA)[,2:7]),border = 0,
         ylab = "Relative OTU abundance",beside = F,names.arg = rep("",6),
         col = c(cols25()[1:6],rep("grey",60)),xlim = c(0,18*1.2),space = c(0.1))
 
 #order
-o = barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.ORDER)[,2:7]),names.arg = rep("",6),
+o = barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.ORDER)[,2:7]),names.arg = rep("",6),border = 0,
         add=T,beside = F,col = c(cols25()[7:11],rep("grey",60)),space = c(1.1*6.5,rep(0.1,5)))
 
 #family
-f = barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.FAMILY)[,2:7]),names.arg = rep("",6),
+f = barplot(as.matrix(as.data.frame(OTU.norm.barplot.taxo_summary.FAMILY)[,2:7]),names.arg = rep("",6),border = 0,
         add=T,beside = F,col = c(cols25()[12:13],rep("grey",60)),space = c(1.1*13-0.1,rep(0.1,5)))
 
 #add x axix labels
@@ -263,7 +264,7 @@ pch.pcoa[design.keep$treatment == "inoculated"] = 19; pch.pcoa[design.keep$treat
 
 dev.new()
 plot(OTU.norm.hel.bray.pcoa$vectors[,1],OTU.norm.hel.bray.pcoa$vectors[,2],col = col, pch = pch.pcoa,
-     ylab = paste("PC2",sep = ""), xlab = paste("PC1",sep = ""))
+     ylab = paste("PC2 (3.79%)",sep = ""), xlab = paste("PC1 (4.66%)",sep = ""))
 abline(h = 0,lty=3,cex =0.7);abline(v=0,lty=3,cex =0.7)
 legend(1,1.5,fill = c("darkred","darkorange","darkblue"),legend = c("    Corn","    Wheat","    Soy"),box.lwd = 1)
 legend(1.15,1.5,fill = rep("transparent",3), border = c("darkred","darkorange","darkblue"),legend = rep("",3),box.lwd = 0,box.col = "transparent")
@@ -279,12 +280,32 @@ system("echo 'Figure 5: Principle Coordinate Analysis (PCoA) of the all samples 
 
 ###RDA ----
 rownames(OTU.norm.barplot)[1:10]
-
 rda = rda(formula=OTU.norm.hel ~ species*growing_stage, data=design.keep,scale = T)
+anova.cca(rda, step=1000) #sign of model 
+anova.cca(rda, by="axis", step=1000) #axis
+anova.cca(rda, by="terms", step=1000) #variables
+
+#Df Variance      F Pr(>F)    
+#Model      9   20.114 4.9005  0.001 ***
+#Residual 105   47.886   
+
+#Df Variance       F Pr(>F)    
+#RDA1       1    9.792 21.4709  0.001 ***
+#RDA2       1    6.120 13.4186  0.001 ***
+#RDA3       1    1.344  2.9472  0.006 **   
+
+
+#Note that I tested also an RDA with species*growing_stage*treatment but treatment is NS, so I removed it.
+#Df Variance       F Pr(>F)    
+#species                           2   15.801 17.3232  0.001 ***
+#growing_stage                     1    0.953  2.0888  0.006 ** 
+#species:growing_stage             1    0.882  1.9349  0.018 * 
+
 dev.new()
 
 #empty plot, and keep plotting data structure to reuse with points()
-rda.plot = plot(rda, type = "n", scaling = 3,ylab = "RDA1 (PVE=9.0%)",xlab ="RDA2 (PVE=14.3%)",xlim = c(-1.5,1.5))
+rda = rda(formula=OTU.norm.hel ~ species*growing_stage, data=design.keep,scale = T)
+rda.plot = plot(rda, type = "n", scaling = 3,ylab = "RDA1 (9.0%)",xlab ="RDA2 (14.3%)",xlim = c(-1.5,1.5))
 col = design.keep$species
 col = gsub("Corn","#8B000099",col);col=gsub("Wheat","#FF8C0099",col);col=gsub("Soy","#00008B99",col)
 
@@ -302,8 +323,8 @@ text(rda.plot$centroids,labels=c("Corn","Soy","Wheat","Late","Early"),col =c("da
 text(rda.plot$species[c(1:10),],labels = rownames(rda.plot$species[c(1:10),]),cex = 0.7, col = "darkcyan",font = 2,adj = 0.8)
 
 #figure legends
-system("echo 'Figure 6: Redundancy Analysis (RDA). Note that only the top10 most abundant VT were labeled, "+" sign represent the centroids of the species (wheat, corn and soy) and growing stage effect (early vs. late).' >>figures/legends")
-
+system("echo 'Redundancy Analysis (RDA). Note that only the top10 most abundant VT (\"X\" signs) were labeled, \"O\" sign are the samples themselves and \"+\" sign represent the centroids of the species (wheat, corn and soy) and growing stage effect (early vs. late). Inoculation treatment is not labeled as samples did not group according to the treatment (e.g. see Figure 5).
+       X and Y labels represent the first two Principal Component and the percentage of variance explained")
 
 dev.print(device=pdf, "figures/figure6_rda.pdf", onefile=FALSE)
 dev.off()
