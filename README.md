@@ -27,7 +27,7 @@ There are several scripts that describe the analyses:
 *figure6_rda.pdf*  
 *legends #figure legends*  
 
-###Results  
+### Results  
 Most results right now (linear mixed effect models + permanova) are actually in Rcode/stats.R  
 *OTU.table.VT.merged.ordered.top.tsv*  
 *PT_AMF.otu_table_from_biom.txt*  
