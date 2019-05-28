@@ -1,6 +1,6 @@
 ##Jan 5th 2017
 ##Bioinformatic pipeline to analyse 18S data
-##Authors:Jacynthe Masse (first designed with Sebastien Renault)
+##Authors:Jacynthe Masse (first designed with Sebastien Renaut)
 ###Updates: Feb 23rd 2017
 ##Script that can call entirerly in R
 

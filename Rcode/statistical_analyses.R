@@ -262,9 +262,12 @@ col = gsub("Corn","darkred",col);col=gsub("Wheat","darkorange",col);col=gsub("So
 pch.pcoa = rep(0,nrow(design.keep))
 pch.pcoa[design.keep$treatment == "inoculated"] = 19; pch.pcoa[design.keep$treatment == "control"] = 21
 
+#PVE
+OTU.norm.hel.bray.pcoa$values$Relative_eig[1:2]
+
 dev.new()
 plot(OTU.norm.hel.bray.pcoa$vectors[,1],OTU.norm.hel.bray.pcoa$vectors[,2],col = col, pch = pch.pcoa,
-     ylab = paste("PC2 (3.79%)",sep = ""), xlab = paste("PC1 (4.66%)",sep = ""))
+     ylab = paste("PC2 (27.9%)",sep = ""), xlab = paste("PC1 (47.9%)",sep = ""))
 abline(h = 0,lty=3,cex =0.7);abline(v=0,lty=3,cex =0.7)
 legend(1,1.5,fill = c("darkred","darkorange","darkblue"),legend = c("    Corn","    Wheat","    Soy"),box.lwd = 1)
 legend(1.15,1.5,fill = rep("transparent",3), border = c("darkred","darkorange","darkblue"),legend = rep("",3),box.lwd = 0,box.col = "transparent")
