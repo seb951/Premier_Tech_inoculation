@@ -1,5 +1,8 @@
 #!/usr/bin/env Rscript
 
+#Note that for now, data are sitting on my imac desktop. I will transfer it once manuscript is accepted.
+
+
 #How many raw reads:
 system("wc -l ~/Desktop/04_MohammedHijri/01_MiSeq_PremierTech/01_Jacynthe/02_Bioinformatic/*fastq >/Users/jerry/Documents/CSBQ/hijri/Premier_Tech/raw.counts")
 raw = read.table("~/Desktop/raw.counts"); 1.96*sd(raw[-nrow(raw),1])/sqrt(nrow(raw)-1)

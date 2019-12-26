@@ -35,4 +35,4 @@ Most results right now (linear mixed effect models + permanova) are actually in 
 *PT_combined_denoised_formated2.fasta*  
 *PT_crop_design.txt*  
 *r_irregulares_16S.blastout* #results of the blast of all VT against the R. irregulare genome.  
-
+*TableS1_OTU_VT_abundance.txt # a new table with all OTU names, VTX correspondance, phylogeny, and absolute abundance.

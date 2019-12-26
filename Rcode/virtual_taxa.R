@@ -12,10 +12,10 @@ blastn = read.table("results/PT_combined_denoised_formated2.blastn.out",header =
 
 #get OTU names and remove temp file
 system("grep '>' results/PT_combined_denoised_formated2.fasta >results/OTU.names")
-OTU.names = read.table("results/OTU_names",stringsAsFactors = F, header = F)
+OTU.names = read.table("results/OTU.names",stringsAsFactors = F, header = F)
 OTU.names = cbind(gsub(">","",OTU.names[,1]),0)
 colnames(OTU.names) = c("OTU","VT")
-system("rm results/OTU_names")
+system("rm results/OTU.names")
 
 #new BLAST table with only best annotated hit (VTX) per OTU.
 for(i in 1:nrow(OTU.names))
@@ -38,6 +38,7 @@ for(i in 1:nrow(OTU.names))
 
 #merge the OTU table according to the VT
 OTU.table = read.table("results/PT_AMF.otu_table_from_biom.txt", sep = "\t", stringsAsFactors = F, header = T,skip=1,comment.char = "")
+OTU.phylogeny = OTU.table[,ncol(OTU.table)]
 OTU.table = OTU.table[,-ncol(OTU.table)]
 OTU.table$VT = 0
 
@@ -48,6 +49,20 @@ for(i in 1:nrow(OTU.table))
     if(temp !=0) OTU.table$VT[i] = temp #add VT 
   #  if(temp == 0) OTU.table$VT[i] = OTU.table[i,1] #add OTU name, because no VT.
   }
+
+#####################DECEMBER 16th 2019
+####Create a new table with all OTU names, VTX correspondance, phylogeny, and absolute abundance.
+#####################
+OTU.combined = cbind(OTU.table$VT,OTU.table[,-ncol(OTU.table)],OTU.phylogeny)
+
+##rename column
+colnames(OTU.combined)[1:2] = c("VT","OTU")
+
+#reorder according to VT
+OTU.combined = OTU.combined[order(OTU.combined[,1]),]
+
+write.table(OTU.combined,"results/TableS1_OTU_VT_abundance.txt",row.names = F, col.names = T, quote = T)
+
 
 #create new OTU table with VT merged ----
 vt = rle(sort(OTU.table$VT))$values

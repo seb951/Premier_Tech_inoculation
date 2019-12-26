@@ -78,10 +78,14 @@ par(mfrow = c(1,3),mar = c(6,5,4,2))
 boxplot(OTU.norm.VTX00113$VTX00113~OTU.norm.VTX00113$treatment,beside = F,font = 3, axisnames = T,ylab = "VTX00113 relative abundance",las = 3, xpd = T,main = "Treatment",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(control),italic(inoculated)))
 
 #species
-boxplot(OTU.norm.VTX00113$VTX00113~OTU.norm.VTX00113$species,beside = F,font = 3, axisnames = T,ylab = "VTX00113 relative abundance",las = 3, xpd = T,main = "Species",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(Corn),italic(Soy),italic(Wheat)))
+x = boxplot(OTU.norm.VTX00113$VTX00113~OTU.norm.VTX00113$species,beside = F,font = 3, axisnames = T,ylab = "VTX00113 relative abundance",las = 3, xpd = T,main = "Species",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(Corn),italic(Soy),italic(Wheat)))
+text(labels = c("a","b","c"),x = c(1.2,2.2,3.2),y = x$stats[4,]+max(x$stats[5,])/20,cex = 1.5,font =3)
 
 #growing_stage
-boxplot(OTU.norm.VTX00113$VTX00113~OTU.norm.VTX00113$growing_stage,beside = F,font = 3, axisnames = T,ylab = "VTX00113 relative abundance",las = 3, xpd = T,main = "Growing stage",cex.lab = 1.5,cex.main = 1.5,names = expression(italic(early),italic(late)))
+x = boxplot(OTU.norm.VTX00113$VTX00113~OTU.norm.VTX00113$growing_stage,beside = F,font = 3, axisnames = T,ylab = "VTX00113 relative abundance",las = 3, xpd = T,main = "Growing stage",cex.lab = 1.5,cex.main = 1.5,names = expression(italic(early),italic(late)))
+text(labels = c("a","b"),x = c(1.2,2.2),y = x$stats[4,]+max(x$stats[5,])/20,cex = 1.5,font =3)
+
+
 dev.print(device=pdf, "figures/figure1_VTX00113.pdf", onefile=FALSE)
 dev.off()
 
@@ -183,7 +187,7 @@ anova(lmm.alpha2)
 #species                 2  5.1225 2.56127 12.7627 1.047e-05 ***
 #growing_stage           1  0.4950 0.49496  2.4664    0.1192    
 #species:growing_stage   1  0.2922 0.29224  1.4562    0.2301   # not signif!  
-# Residuals             109 21.8746 0.20068 
+#Residuals             109 21.8746 0.20068 
 
 ###alpha diversity:boxplot ----
 #3 boxplots for treatment, species and early/late
@@ -194,7 +198,8 @@ par(mfrow = c(1,3),mar = c(6,5,4,2))
 boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$treatment,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Treatment",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(control),italic(inoculated)))
 
 #species
-boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$species,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Species",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(Corn),italic(Soy),italic(Wheat)))
+x = boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$species,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Species",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(Corn),italic(Soy),italic(Wheat)))
+text(labels = c("a","b","c"),x = c(1.2,2.2,3.2),y = x$stats[4,]+max(x$stats[5,])/20,cex = 1.5,font =3)
 
 #growing_stage
 boxplot(OTU.norm.alpha$alpha~OTU.norm.alpha$growing_stage,beside = F,font = 3, axisnames = T,ylab = expression(italic(alpha)~~diversity),las = 3, xpd = T,main = "Growing stage",cex.lab = 1.5,cex.main = 1.5,names = expression(italic(early),italic(late)))
