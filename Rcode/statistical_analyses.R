@@ -337,6 +337,62 @@ system("echo 'Redundancy Analysis (RDA). Note that only the top10 most abundant 
 dev.print(device=pdf, "figures/figure6_rda.pdf", onefile=FALSE)
 dev.off()
 
+
+
+####################################################################################
+############dec 30th, 2019: modifications to plot Figure S1 with vtx114.############
+####################################################################################
+OTU.norm.VTX00114 = cbind(sqrt(OTU.norm[,33]),design.keep)
+colnames(OTU.norm.VTX00114)[1] = colnames(OTU.norm)[33]
+
+#boxplots
+dev.new()
+#boxplot: 3 boxplots for treatment, species and early/late
+dev.new(width=10, height=6,units = "cm",noRStudioGD = TRUE)
+par(mfrow = c(1,3),mar = c(6,5,4,2))
+
+#treatment
+boxplot(OTU.norm.VTX00114$VTX00114~OTU.norm.VTX00114$treatment,beside = F,font = 3, axisnames = T,ylab = "VTX00114 relative abundance",las = 3, xpd = T,main = "Treatment",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(control),italic(inoculated)))
+
+#species
+x = boxplot(OTU.norm.VTX00114$VTX00114~OTU.norm.VTX00114$species,beside = F,font = 3, axisnames = T,ylab = "VTX00114 relative abundance",las = 3, xpd = T,main = "Species",cex.main = 1.5,cex.lab = 1.5,names = expression(italic(Corn),italic(Soy),italic(Wheat)))
+text(labels = c("a","b","b"),x = c(1.2,2.2,3.2),y = x$stats[4,]+max(x$stats[5,])/20,cex = 1.5,font =3)
+
+#growing_stage
+x = boxplot(OTU.norm.VTX00114$VTX00114~OTU.norm.VTX00114$growing_stage,beside = F,font = 3, axisnames = T,ylab = "VTX00114 relative abundance",las = 3, xpd = T,main = "Growing stage",cex.lab = 1.5,cex.main = 1.5,names = expression(italic(early),italic(late)))
+#text(labels = c("a","b"),x = c(1.2,2.2),y = x$stats[4,]+max(x$stats[5,])/20,cex = 1.5,font =3)
+
+
+dev.print(device=pdf, "figures/figureS1_VTX00114.pdf", onefile=FALSE)
+dev.off()
+
+#linear mixed effect model (block is random)
+lmm1 <- lme(VTX00114~treatment+species+growing_stage,data = OTU.norm.VTX00114,random = ~1|bloc, method = "REML")
+anova(lmm1)
+
+#              numDF denDF   F-value p-value
+#(Intercept)       1   102 266.33262  <.0001
+#treatment         1     8   2.00261  0.1948
+#species           2     8  13.52521  0.0027
+#growing_stage     1   102   1.13385  0.2895
+
+shapiro.test(lmm1$residuals) #normaly distributed with the square root transform.
+
+#test the interaction in a linear model?
+lmm2 <- lm(VTX00114~treatment+species*growing_stage,data = OTU.norm.VTX00114)
+anova(lmm2)
+
+#                       Df   Sum Sq   Mean Sq F value    Pr(>F)    
+#treatment               1 0.000891 0.0008910  2.0849   0.15163    
+#species                 2 0.012035 0.0060176 14.0811 3.635e-06 ***
+#growing_stage           1 0.000504 0.0005045  1.1805   0.27966    
+#species:growing_stage   1 0.002359 0.0023593  5.5208   0.02059 *   *not sign.. !!!!
+
+
+
+
+
+
 ###sandbox ----
 
 #font = as.numeric(ifelse(regexpr("Glomus",taxo)>0,"2","1"))
