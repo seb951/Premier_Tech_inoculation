@@ -1,0 +1,12 @@
+###this is how I got the MAARJAM DATABASE
+
+#First, register with maarjam. 
+
+#Then log in
+
+#Go to Search, by fungal taxon and search for Glomeromycetes
+
+#Select 18S and export as "Export all sequences in set (long form)"
+
+#then create blast database
+makeblastdb -dbtype nucl -in glomeromycetes.fasta 
